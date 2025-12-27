@@ -20,6 +20,8 @@ export interface Plot {
   fieldId: string;
   companyId?: string;
   hectares: number;
+  lat?: number;
+  lng?: number;
   ownerId: string;
   ownerName?: string;
 }

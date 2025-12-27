@@ -3,11 +3,14 @@ import { collection, addDoc, updateDoc, doc, deleteDoc, writeBatch, query, where
 import { db } from '../firebase';
 
 // COMPANIES
-export const addCompany = async (name: string, ownerId: string, ownerName?: string) => { await addDoc(collection(db, 'companies'), { name, ownerId, ownerName }); };
+export const addCompany = async (name: string, ownerId: string, ownerName?: string) => {
+    const docRef = await addDoc(collection(db, 'companies'), { name, ownerId, ownerName });
+    return docRef.id;
+};
 export const updateCompany = async (id: string, name: string) => { await updateDoc(doc(db, 'companies', id), { name }); };
 
 // CASCADING DELETE FOR COMPANY
-export const deleteCompany = async (id: string) => { 
+export const deleteCompany = async (id: string) => {
     const batch = writeBatch(db);
 
     // 1. Reference to the Company
@@ -33,11 +36,14 @@ export const deleteCompany = async (id: string) => {
 };
 
 // FIELDS
-export const addField = async (name: string, companyId: string, ownerId: string, ownerName?: string) => { await addDoc(collection(db, 'fields'), { name, companyId, ownerId, ownerName }); };
+export const addField = async (name: string, companyId: string, ownerId: string, ownerName?: string) => {
+    const docRef = await addDoc(collection(db, 'fields'), { name, companyId, ownerId, ownerName });
+    return docRef.id;
+};
 export const updateField = async (id: string, name: string) => { await updateDoc(doc(db, 'fields', id), { name }); };
 
 // CASCADING DELETE FOR FIELD
-export const deleteField = async (id: string) => { 
+export const deleteField = async (id: string) => {
     const batch = writeBatch(db);
 
     // 1. Reference to the Field
@@ -56,12 +62,20 @@ export const deleteField = async (id: string) => {
 };
 
 // PLOTS
-export const addPlot = async (name: string, fieldId: string, hectares: number, ownerId: string, ownerName?: string, companyId?: string) => { await addDoc(collection(db, 'plots'), { name, fieldId, hectares, ownerId, ownerName, companyId }); };
-export const updatePlot = async (id: string, name: string, hectares: number, fieldId?: string, companyId?: string) => { 
+export const addPlot = async (name: string, fieldId: string, hectares: number, ownerId: string, ownerName?: string, companyId?: string, lat?: number, lng?: number) => {
+    const data: any = { name, fieldId, hectares, ownerId, ownerName, companyId };
+    if (lat !== undefined) data.lat = lat;
+    if (lng !== undefined) data.lng = lng;
+    const docRef = await addDoc(collection(db, 'plots'), data);
+    return docRef.id;
+};
+export const updatePlot = async (id: string, name: string, hectares: number, fieldId?: string, companyId?: string, lat?: number, lng?: number) => {
     const data: any = { name, hectares };
     if (fieldId) data.fieldId = fieldId;
     if (companyId) data.companyId = companyId;
-    await updateDoc(doc(db, 'plots', id), data); 
+    if (lat !== undefined) data.lat = lat;
+    if (lng !== undefined) data.lng = lng;
+    await updateDoc(doc(db, 'plots', id), data);
 };
 export const deletePlot = async (id: string) => { await deleteDoc(doc(db, 'plots', id)); };
 
