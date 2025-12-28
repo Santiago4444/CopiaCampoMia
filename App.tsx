@@ -29,6 +29,7 @@ import { CropAssignmentsView } from './views/CropAssignmentsView';
 import { DashboardView } from './views/DashboardView';
 import { RecipesView } from './views/RecipesView';
 import { NotificationManager } from './components/NotificationManager';
+import { BudgetManager } from './components/finance/BudgetManager';
 
 // --- Main Inner App (Access to Contexts) ---
 const MainApp: React.FC = () => {
@@ -98,15 +99,6 @@ const MainApp: React.FC = () => {
             color: 'text-amber-600',
             bg: 'bg-amber-50 dark:bg-amber-900/20'
           },
-          {
-            title: '4. Campañas',
-            count: data.seasons.length,
-            icon: Calendar,
-            target: 'manage-seasons' as ViewState,
-            desc: 'Ciclos (Ej: 23/24)',
-            color: 'text-purple-600',
-            bg: 'bg-purple-50 dark:bg-purple-900/20'
-          },
         ].map((item) => (
           <div key={item.title} onClick={() => setView(item.target)} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md hover:border-agro-300 dark:hover:border-agro-500 transition-all flex flex-col items-center text-center group h-full relative overflow-hidden">
             <div className={`absolute top-0 left-0 w-full h-1 ${item.bg.split(' ')[0].replace('50', '500')}`}></div>
@@ -134,9 +126,7 @@ const MainApp: React.FC = () => {
             <ArrowRight className="w-4 h-4 text-gray-400 rotate-90 md:rotate-0" />
             <span className="font-semibold bg-white dark:bg-gray-800 px-3 py-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm">2. Agrega Campos</span>
             <ArrowRight className="w-4 h-4 text-gray-400 rotate-90 md:rotate-0" />
-            <span className="font-semibold bg-white dark:bg-gray-800 px-3 py-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm">3. Dibuja Lotes</span>
-            <ArrowRight className="w-4 h-4 text-gray-400 rotate-90 md:rotate-0" />
-            <span className="font-semibold bg-white dark:bg-gray-800 px-3 py-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm">4. Activa Campaña</span>
+            <span className="font-semibold bg-white dark:bg-gray-800 px-3 py-1 rounded border border-gray-200 dark:border-gray-700 shadow-sm">3. Crea y Ubica Lotes</span>
           </div>
         </div>
       </div>
@@ -171,6 +161,12 @@ const MainApp: React.FC = () => {
       {view === 'recipes' && <RecipesView />}
 
       {view === 'crop-assignments' && <CropAssignmentsView />}
+
+      {view === 'budget-manager' && dataOwnerId && (
+        <div className="max-w-6xl mx-auto">
+          <BudgetManager />
+        </div>
+      )}
     </Layout>
   );
 };

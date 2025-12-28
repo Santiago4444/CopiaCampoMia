@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, Search, X } from 'lucide-react';
-import { Button, Input, Modal } from '../UI';
+import { Button, Input, Modal, Select } from '../UI';
 import { Crop, Task } from '../../types';
 import * as Storage from '../../services/storageService';
 import { useData } from '../../contexts/DataContext';
@@ -57,7 +57,7 @@ export const TaskManager: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
   const { dataOwnerId, dataOwnerName } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Task | null>(null);
-  const [formData, setFormData] = useState({ name: '', price: 0 });
+  const [formData, setFormData] = useState({ name: '', price: 0, category: '' });
   const [searchTerm, setSearchTerm] = useState('');
 
   // Delete State
@@ -67,8 +67,8 @@ export const TaskManager: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
     .filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const openAdd = () => { setEditingItem(null); setFormData({ name: '', price: 0 }); setIsModalOpen(true); };
-  const openEdit = (item: Task) => { setEditingItem(item); setFormData({ name: item.name, price: item.pricePerHectare || 0 }); setIsModalOpen(true); };
+  const openAdd = () => { setEditingItem(null); setFormData({ name: '', price: 0, category: 'Otras Labores' }); setIsModalOpen(true); };
+  const openEdit = (item: Task) => { setEditingItem(item); setFormData({ name: item.name, price: item.pricePerHectare || 0, category: item.category || 'Otras Labores' }); setIsModalOpen(true); };
 
   const handleDeleteClick = (id: string) => setDeleteId(id);
   const confirmDelete = async () => { if (deleteId) { await Storage.deleteTask(deleteId); setDeleteId(null); } };
@@ -76,25 +76,38 @@ export const TaskManager: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !dataOwnerId) return;
-    if (editingItem) await Storage.updateTask(editingItem.id, formData.name, Number(formData.price));
-    else await Storage.addTask(formData.name, dataOwnerId, dataOwnerName, Number(formData.price));
+    if (editingItem) await Storage.updateTask(editingItem.id, formData.name, Number(formData.price), formData.category);
+    else await Storage.addTask(formData.name, dataOwnerId, dataOwnerName, Number(formData.price), formData.category);
     setIsModalOpen(false);
   };
 
   return (
-    <SimpleListLayout title="Tareas" count={filteredItems.length} onAdd={openAdd} searchTerm={searchTerm} onSearch={setSearchTerm}>
+    <SimpleListLayout title="Labores" count={filteredItems.length} onAdd={openAdd} searchTerm={searchTerm} onSearch={setSearchTerm}>
       {filteredItems.map(item => (
         <SimpleListItem key={item.id} name={item.name} subtitle={item.pricePerHectare ? `USD ${item.pricePerHectare}/ha` : 'Sin precio definido'} onEdit={() => openEdit(item)} onDelete={() => handleDeleteClick(item.id)} />
       ))}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingItem ? "Editar Tarea" : "Nueva Tarea"}>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingItem ? "Editar Labor" : "Nueva Labor"}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input label="Nombre" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} autoFocus required />
+          <Select
+            label="Categoría"
+            value={formData.category}
+            onChange={e => setFormData({ ...formData, category: e.target.value })}
+            options={[
+              { value: 'Pulverización Terrestre', label: 'Pulverización Terrestre' },
+              { value: 'Pulverización Selectiva', label: 'Pulverización Selectiva' },
+              { value: 'Pulverización Aérea', label: 'Pulverización Aérea' },
+              { value: 'Siembra', label: 'Siembra' },
+              { value: 'Otras Labores', label: 'Otras Labores' }
+            ]}
+            required
+          />
           <Input label="Precio Estimado (USD/ha)" type="number" value={formData.price} onChange={e => setFormData({ ...formData, price: parseFloat(e.target.value) })} />
           <div className="flex justify-end gap-2 pt-4"><Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button type="submit">Guardar</Button></div>
         </form>
       </Modal>
-      <Modal isOpen={!!deleteId} onClose={() => setDeleteId(null)} title="Eliminar Tarea">
-        <div className="space-y-4"><p className="text-gray-700 dark:text-gray-300">¿Eliminar esta tarea?</p><div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setDeleteId(null)}>Cancelar</Button><Button variant="danger" onClick={confirmDelete}>Eliminar</Button></div></div>
+      <Modal isOpen={!!deleteId} onClose={() => setDeleteId(null)} title="Eliminar Labor">
+        <div className="space-y-4"><p className="text-gray-700 dark:text-gray-300">¿Eliminar esta labor?</p><div className="flex justify-end gap-2"><Button variant="ghost" onClick={() => setDeleteId(null)}>Cancelar</Button><Button variant="danger" onClick={confirmDelete}>Eliminar</Button></div></div>
       </Modal>
     </SimpleListLayout>
   );

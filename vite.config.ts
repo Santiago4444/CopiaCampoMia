@@ -14,8 +14,8 @@ export default defineConfig({
       },
       includeAssets: ['icon-192.png', 'icon-512.png', 'manifest.json'],
       manifest: {
-        name: 'AgroMonitor AI',
-        short_name: 'AgroMonitor',
+        name: 'Ing Marcon',
+        short_name: 'Ing Marcon',
         start_url: '/',
         display: 'standalone',
         background_color: '#f8fafc',
@@ -45,7 +45,7 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]

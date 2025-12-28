@@ -9,7 +9,7 @@ import {
     AlertTriangle, ShoppingCart, Info, MapPin, Clock
 } from 'lucide-react';
 import * as Storage from '../../services/storageService';
-import { Prescription, PrescriptionExecution } from '../../types';
+import { Prescription, PrescriptionExecution, ExecutionItem } from '../../types';
 
 interface ExecutionModeProps {
     onBack: () => void;
@@ -36,6 +36,9 @@ export const ExecutionMode: React.FC<ExecutionModeProps> = ({ onBack, forcedComp
     const [executingPlotId, setExecutingPlotId] = useState<string | null>(null);
     const [executionDate, setExecutionDate] = useState(new Date().toISOString().split('T')[0]);
     const [observation, setObservation] = useState('');
+    const [actualHectares, setActualHectares] = useState(0);
+    const [actualItems, setActualItems] = useState<ExecutionItem[]>([]);
+    const [actualTaskCosts, setActualTaskCosts] = useState<Record<string, number>>({});
 
     // Audio State
     const { isRecording, audioBlobUrl, audioDuration, toggleRecording, resetRecording } = useMediaRecorder();
@@ -72,6 +75,34 @@ export const ExecutionMode: React.FC<ExecutionModeProps> = ({ onBack, forcedComp
         setExecutingPlotId(plotId);
         setExecutionDate(new Date().toISOString().split('T')[0]);
         setObservation('');
+
+        // Inicializar Valores Reales
+        // 1. Hectareas (Buscar si hay metadatos o usar del lote)
+        const metaHectares = recipe.plotMetadata?.[plotId]?.affectedHectares;
+        const plotDef = data.plots.find(p => p.id === plotId);
+        setActualHectares(metaHectares || plotDef?.hectares || 0);
+
+        // 2. Insumos (Clonar desde items recetados)
+        const initialItems: ExecutionItem[] = recipe.items.map(i => {
+            const product = data.agrochemicals.find(a => a.id === i.supplyId);
+            return {
+                supplyId: i.supplyId,
+                supplyName: i.supplyName,
+                dose: parseFloat(i.dose.replace(',', '.')) || 0,
+                unit: i.unit,
+                cost: product?.price || 0 // Capturar precio actual
+            };
+        });
+        setActualItems(initialItems);
+
+        // 3. Labores (Inicializar Costos Snapshot)
+        const initialTaskCosts: Record<string, number> = {};
+        recipe.taskIds.forEach(taskId => {
+            const task = data.tasks.find(t => t.id === taskId);
+            initialTaskCosts[taskId] = task?.pricePerHectare || 0;
+        });
+        setActualTaskCosts(initialTaskCosts);
+
         resetRecording();
     };
 
@@ -89,7 +120,11 @@ export const ExecutionMode: React.FC<ExecutionModeProps> = ({ onBack, forcedComp
                 })(),
                 executedBy: currentUser.name,
                 observation: observation,
-                audioDuration: audioDuration > 0 ? audioDuration : undefined
+                audioDuration: audioDuration > 0 ? audioDuration : undefined,
+                actualHectares,
+                actualItems,
+                actualTasks: executingRecipe.taskIds, // Por defecto asumimos mismas tareas, editable a futuro
+                actualTaskCosts: actualTaskCosts // Costos reales capturados
             };
 
             await Storage.markPrescriptionExecuted(
@@ -281,6 +316,96 @@ export const ExecutionMode: React.FC<ExecutionModeProps> = ({ onBack, forcedComp
                             value={executionDate}
                             onChange={(e) => setExecutionDate(e.target.value)}
                         />
+
+                        {/* Actual Values Edit Section */}
+                        <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                            <h5 className="font-bold text-gray-800 dark:text-gray-200 text-sm mb-3">Detalles de Aplicación Real</h5>
+
+                            {/* Hectares Override */}
+                            <div className="mb-4">
+                                <label className="block text-xs font-medium text-gray-500 mb-1">Hectáreas Aplicadas Realmente</label>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="number"
+                                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 text-sm"
+                                        value={actualHectares}
+                                        onChange={(e) => setActualHectares(parseFloat(e.target.value) || 0)}
+                                    />
+                                    <span className="text-sm text-gray-500">ha</span>
+                                </div>
+                            </div>
+
+                            {/* Supplies Override */}
+                            <div className="space-y-3 mb-4">
+                                <label className="block text-xs font-medium text-gray-500">Insumos y Dosis Reales</label>
+                                {actualItems.map((item, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg border border-gray-100 dark:border-gray-700">
+                                        <div className="flex-1">
+                                            <p className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{item.supplyName}</p>
+                                        </div>
+                                        <div className="w-20">
+                                            <input
+                                                type="number"
+                                                className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded text-xs text-right"
+                                                value={item.dose}
+                                                onChange={(e) => {
+                                                    const val = parseFloat(e.target.value) || 0;
+                                                    const newItems = [...actualItems];
+                                                    newItems[idx].dose = val;
+                                                    setActualItems(newItems);
+                                                }}
+                                            />
+                                        </div>
+                                        <span className="text-xs text-gray-500 w-10">{item.unit}</span>
+                                        <button
+                                            onClick={() => {
+                                                const newItems = [...actualItems];
+                                                newItems.splice(idx, 1);
+                                                setActualItems(newItems);
+                                            }}
+                                            className="text-red-500 p-1"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <div className="text-xs text-center text-gray-400 italic">
+                                    Si usaste otro insumo no listado, agregalo en observaciones por ahora.
+                                </div>
+                            </div>
+
+                            {/* Tasks Override (NEW) */}
+                            {executingRecipe.taskIds.length > 0 && (
+                                <div className="space-y-3">
+                                    <label className="block text-xs font-medium text-gray-500">Labores ($/ha)</label>
+                                    {executingRecipe.taskIds.map((taskId) => {
+                                        const taskName = executingRecipe.taskNames[executingRecipe.taskIds.indexOf(taskId)];
+                                        const cost = actualTaskCosts[taskId] ?? 0;
+                                        return (
+                                            <div key={taskId} className="flex gap-2 items-center bg-purple-50 dark:bg-purple-900/10 p-2 rounded-lg border border-purple-100 dark:border-purple-800">
+                                                <div className="flex-1">
+                                                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300 truncate">{taskName}</p>
+                                                </div>
+                                                <div className="w-24 flex items-center gap-1">
+                                                    <span className="text-xs text-gray-400">$</span>
+                                                    <input
+                                                        type="number"
+                                                        className="w-full p-1 border border-gray-300 dark:border-gray-600 rounded text-xs text-right"
+                                                        value={cost}
+                                                        onChange={(e) => {
+                                                            const val = parseFloat(e.target.value) || 0;
+                                                            setActualTaskCosts(prev => ({ ...prev, [taskId]: val }));
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span className="text-xs text-gray-500">/ha</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                        </div>
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Observaciones (Opcional)</label>

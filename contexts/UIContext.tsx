@@ -20,14 +20,14 @@ const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [view, setView] = useState<ViewState>('home');
-  
+
   // --- STICKY CONTEXT: Initialize from LocalStorage ---
   const [selection, setSelection] = useState<SelectionState>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('agromonitor_selection');
+        const saved = localStorage.getItem('ingmarcon_selection');
         if (saved) {
-           return JSON.parse(saved);
+          return JSON.parse(saved);
         }
       } catch (e) {
         console.warn('Error reading selection from localStorage', e);
@@ -39,18 +39,18 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // --- STICKY CONTEXT: Persist to LocalStorage ---
   useEffect(() => {
     if (typeof window !== 'undefined') {
-        localStorage.setItem('agromonitor_selection', JSON.stringify(selection));
+      localStorage.setItem('ingmarcon_selection', JSON.stringify(selection));
     }
   }, [selection]);
 
   const [editingMonitoringId, setEditingMonitoringId] = useState<string | null>(null);
-  
+
   // Connectivity
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  
+
   // Toast State
-  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'warning' | 'error' }>({ 
-    show: false, message: '', type: 'success' 
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'warning' | 'error' }>({
+    show: false, message: '', type: 'success'
   });
 
   const showNotification = (message: string, type: 'success' | 'warning' | 'error') => {
@@ -88,11 +88,12 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     if (view === 'manage-crops') return 'Catálogo de Cultivos';
     if (view === 'manage-pests') return 'Catálogo de Plagas';
     if (view === 'manage-seasons') return 'Gestión de Campañas';
-    if (view === 'manage-agrochemicals') return 'Catálogo de Agroquímicos';
-    if (view === 'manage-tasks') return 'Catálogo de Tareas';
+    if (view === 'manage-agrochemicals') return 'Catálogo de Insumos';
+    if (view === 'manage-tasks') return 'Catálogo de Labores';
     if (view === 'crop-assignments') return 'Asignación de Cultivos';
+    if (view === 'budget-manager') return 'Gestión de Presupuestos';
     if (view.startsWith('manage-')) return 'Gestión';
-    return 'AgroMonitor';
+    return 'Ing Marcon';
   };
 
   return (
@@ -108,11 +109,11 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       headerTitle: getHeaderTitle()
     }}>
       {children}
-      <Toast 
-        message={toast.message} 
-        type={toast.type} 
-        isVisible={toast.show} 
-        onClose={() => setToast(prev => ({ ...prev, show: false }))} 
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.show}
+        onClose={() => setToast(prev => ({ ...prev, show: false }))}
       />
     </UIContext.Provider>
   );

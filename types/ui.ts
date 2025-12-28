@@ -1,7 +1,7 @@
 
-import { 
-  Company, Field, Plot, Season, Pest, Crop, Agrochemical, Task, 
-  Prescription, PrescriptionTemplate, PlotAssignment, MonitoringRecord, LotSummary 
+import {
+  Company, Field, Plot, Season, Pest, Crop, Agrochemical, Task,
+  Prescription, PrescriptionTemplate, PlotAssignment, MonitoringRecord, LotSummary
 } from './models';
 
 export interface AppState {
@@ -12,7 +12,7 @@ export interface AppState {
   pests: Pest[];
   crops: Crop[];
   agrochemicals: Agrochemical[];
-  tasks: Task[]; 
+  tasks: Task[];
   prescriptions: Prescription[];
   templates: PrescriptionTemplate[];
   assignments: PlotAssignment[];
@@ -20,22 +20,23 @@ export interface AppState {
   lotSummaries: LotSummary[];
 }
 
-export type ViewState = 
-  | 'home' 
-  | 'history' 
-  | 'analytics' 
-  | 'recipes' 
-  | 'crop-assignments' 
+export type ViewState =
+  | 'home'
+  | 'history'
+  | 'analytics'
+  | 'recipes'
+  | 'crop-assignments'
   | 'structure-hub'
-  | 'manage-companies' 
-  | 'manage-fields' 
-  | 'manage-plots' 
-  | 'manage-seasons' 
-  | 'manage-pests' 
+  | 'manage-companies'
+  | 'manage-fields'
+  | 'manage-plots'
+  | 'manage-seasons'
+  | 'manage-pests'
   | 'manage-crops'
   | 'manage-agrochemicals'
   | 'manage-tasks'
-  | 'manage-team';
+  | 'manage-team'
+  | 'budget-manager';
 
 export interface SelectionState {
   companyId: string | null;

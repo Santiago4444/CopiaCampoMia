@@ -92,6 +92,6 @@ export const updateAgrochemical = async (id: string, name: string, extraData?: a
 export const deleteAgrochemical = async (id: string) => { await deleteDoc(doc(db, 'agrochemicals', id)); };
 
 // TASKS
-export const addTask = async (name: string, ownerId: string, ownerName?: string, pricePerHectare?: number) => { await addDoc(collection(db, 'tasks'), { name, ownerId, ownerName, pricePerHectare: pricePerHectare || 0 }); };
-export const updateTask = async (id: string, name: string, pricePerHectare?: number) => { await updateDoc(doc(db, 'tasks', id), { name, pricePerHectare: pricePerHectare || 0 }); };
+export const addTask = async (name: string, ownerId: string, ownerName?: string, pricePerHectare?: number, category?: string) => { await addDoc(collection(db, 'tasks'), { name, ownerId, ownerName, pricePerHectare: pricePerHectare || 0, category: category || 'Otras Labores' }); };
+export const updateTask = async (id: string, name: string, pricePerHectare?: number, category?: string) => { await updateDoc(doc(db, 'tasks', id), { name, pricePerHectare: pricePerHectare || 0, category: category || 'Otras Labores' }); };
 export const deleteTask = async (id: string) => { await deleteDoc(doc(db, 'tasks', id)); };

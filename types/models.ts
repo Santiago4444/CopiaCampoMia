@@ -67,6 +67,7 @@ export interface Task {
   ownerId: string;
   ownerName?: string;
   pricePerHectare?: number;
+  category?: 'Pulverización Terrestre' | 'Pulverización Selectiva' | 'Pulverización Aérea' | 'Siembra' | 'Otras Labores';
 }
 
 export interface PrescriptionItem {
@@ -77,6 +78,15 @@ export interface PrescriptionItem {
   lockedPrice?: number; // Snapshot: Precio congelado al momento de crear la receta
 }
 
+// NUEVO: Item de ejecución con costo real snapshot
+export interface ExecutionItem {
+  supplyId: string;
+  supplyName: string;
+  dose: number;
+  unit: string;
+  cost: number; // Costo por unidad al momento de la ejecución
+}
+
 // NUEVO: Datos de ejecución por lote dentro de una receta
 export interface PrescriptionExecution {
   executed: boolean;
@@ -85,6 +95,39 @@ export interface PrescriptionExecution {
   observation?: string;
   audioUrl?: string; // Feedback del cliente (audio)
   audioDuration?: number;
+
+  // Datos reales de aplicación
+  actualHectares?: number;
+  actualItems?: ExecutionItem[];
+  actualTasks?: string[];
+  actualTaskCosts?: Record<string, number>; // Map taskId -> pricePerHa snapshot
+}
+
+// NUEVO: Presupuesto por Campaña y Cultivo
+export interface Budget {
+  id: string;
+  companyId: string;
+  seasonId: string;
+  cropId: string;
+
+  // Agroquímicos (USD/ha)
+  herbicidas: number;
+  insecticidas: number;
+  fungicidas: number;
+  fertilizantes: number;
+  coadyuvantes: number;
+  otrosAgroquimicos: number; // Mapea a 'Otro'/'Otro Agroquimico'
+  semillas: number;
+
+  // Labores (USD/ha)
+  pulverizacionTerrestre: number;
+  pulverizacionSelectiva: number;
+  pulverizacionAerea: number;
+  siembra: number;
+  otrasLabores: number;
+
+  createdAt: number;
+  updatedAt: number;
 }
 
 export interface Prescription {

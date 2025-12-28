@@ -617,7 +617,7 @@ export const DashboardView: React.FC = () => {
             doc.setFontSize(10);
             doc.setFont("helvetica", "normal");
             doc.text(`Fecha: ${dateStr}`, pageWidth - 15, 15, { align: 'right' });
-            doc.text("AgroMonitor AI", pageWidth - 15, 22, { align: 'right' });
+            doc.text("Ing Marcon", pageWidth - 15, 22, { align: 'right' });
 
             doc.setDrawColor(200, 200, 200);
             doc.setFillColor(250, 250, 250);
@@ -858,7 +858,9 @@ export const DashboardView: React.FC = () => {
     return (
         <div className="max-w-6xl mx-auto space-y-4 md:space-y-6 pb-20">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">Dashboard Agronómico</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    Dashboard Agronómico
+                </h2>
                 <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                     <Button variant="secondary" onClick={handleExportExcel} className="w-full sm:w-auto text-xs font-bold" disabled={filteredSummaries.length === 0}>
                         <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5" /> EXCEL
@@ -974,12 +976,8 @@ export const DashboardView: React.FC = () => {
                 {/* BUDGET SECTION (PROPUESTA 2) */}
                 <div className="mt-6" ref={budgetContainerRef}>
                     <BudgetSection
-                        plots={filteredPlotsForTable}
-                        assignments={data.assignments}
-                        prescriptions={data.prescriptions}
-                        agrochemicals={data.agrochemicals}
                         seasonId={selectedSeasonId}
-                        isExporting={isExporting} // PASS EXPORT STATE
+                        companyId={effectiveCompanyId}
                     />
                 </div>
             </div>

@@ -210,7 +210,7 @@ export const RecipesView: React.FC = () => {
     }, [selectedRecipeIds, data.prescriptions, data.plots, data.agrochemicals]);
 
     const copyShoppingListToClipboard = () => {
-        let text = `🛒 LISTA DE COMPRAS AGROMONITOR\n`;
+        let text = `🛒 LISTA DE COMPRAS ING MARCON\n`;
         text += `Para ${selectedRecipeIds.length} recetas seleccionadas\n\n`;
 
         Object.entries(calculateShoppingList).forEach(([type, items]) => {
@@ -253,7 +253,7 @@ export const RecipesView: React.FC = () => {
             doc.setFontSize(10);
             doc.setFont("helvetica", "normal");
             doc.text(`Fecha: ${recipeDate}`, pageWidth - margin, 15, { align: 'right' });
-            doc.text("AgroMonitor AI", pageWidth - margin, 22, { align: 'right' });
+            doc.text("Ing Marcon", pageWidth - margin, 22, { align: 'right' });
 
             // Context Box
             yPos = 40;
@@ -378,7 +378,7 @@ export const RecipesView: React.FC = () => {
         try {
             const doc = generatePDFObject();
             const dateStr = new Date().toISOString().split('T')[0];
-            const fileName = `Recetas_AgroMonitor_${dateStr}.pdf`;
+            const fileName = `Recetas_IngMarcon_${dateStr}.pdf`;
 
             // Manual save to ensure filename consistency
             const blob = doc.output('blob');
