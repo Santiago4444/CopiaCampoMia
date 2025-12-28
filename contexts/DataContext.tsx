@@ -24,7 +24,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
  */
 function mergeDeduplicated(firestoreItems: any[], localItems: any[]): any[] {
   if (localItems.length === 0) return firestoreItems;
-  
+
   // Crear mapa de documentos de Firestore por campos únicos
   const firestoreMap = new Map<string, any>();
   firestoreItems.forEach(item => {
@@ -32,13 +32,13 @@ function mergeDeduplicated(firestoreItems: any[], localItems: any[]): any[] {
     const key = `${item.createdAt}_${item.plotId}_${item.operatorId}`;
     firestoreMap.set(key, item);
   });
-  
+
   // Filtrar items del cache local que NO estén en Firestore
   const uniqueLocalItems = localItems.filter(localItem => {
     const key = `${localItem.createdAt}_${localItem.plotId}_${localItem.operatorId}`;
     return !firestoreMap.has(key);
   });
-  
+
   // Combinar: Firestore + items locales únicos
   return [...firestoreItems, ...uniqueLocalItems];
 }
@@ -49,7 +49,7 @@ function mergeDeduplicated(firestoreItems: any[], localItems: any[]): any[] {
  */
 function mergePrescriptions(firestoreItems: any[], localItems: any[]): any[] {
   if (localItems.length === 0) return firestoreItems;
-  
+
   // Crear mapa de documentos de Firestore por campos únicos
   const firestoreMap = new Map<string, any>();
   firestoreItems.forEach(item => {
@@ -57,20 +57,20 @@ function mergePrescriptions(firestoreItems: any[], localItems: any[]): any[] {
     const key = `${item.createdAt}_${item.companyId}_${item.fieldId}`;
     firestoreMap.set(key, item);
   });
-  
+
   // Filtrar items del cache local que NO estén en Firestore
   const uniqueLocalItems = localItems.filter(localItem => {
     const key = `${localItem.createdAt}_${localItem.companyId}_${localItem.fieldId}`;
-    
+
     // Si la clave existe en Firestore, este item local ya fue sincronizado
     if (firestoreMap.has(key)) {
       console.log(`🔄 Receta local deduplicada (ya en Firestore): ${key}`);
       return false; // No incluir, ya está en Firestore
     }
-    
+
     return true; // Incluir, aún no sincronizada
   });
-  
+
   // Combinar: Firestore + items locales únicos
   return [...firestoreItems, ...uniqueLocalItems];
 }
@@ -78,7 +78,7 @@ function mergePrescriptions(firestoreItems: any[], localItems: any[]): any[] {
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
   const [localCacheVersion, setLocalCacheVersion] = useState(0);
-  
+
   // Ejecutar migración una sola vez al inicio
   // useEffect(() => {
   //   const migrationKey = 'migration_prescription_cleanup_v1';
@@ -90,7 +90,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   //     }
   //   }
   // }, []);
-  
+
   const [data, setData] = useState<AppState>(() => {
     // CRITICAL: Intentar cargar desde cache optimizado al inicio (offline support)
     if (typeof window !== 'undefined') {
@@ -102,9 +102,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
     return {
-      companies: [], fields: [], plots: [], seasons: [], pests: [], crops: [], 
+      companies: [], fields: [], plots: [], seasons: [], pests: [], crops: [],
       agrochemicals: [], tasks: [], prescriptions: [], templates: [],
-      assignments: [], monitorings: [], lotSummaries: []
+      assignments: [], monitorings: [], lotSummaries: [], users: []
     };
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -129,7 +129,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLocalCacheVersion(prev => prev + 1);
       console.log('🔄 Cache local actualizado - recombinando datos');
     };
-    
+
     window.addEventListener('localCacheUpdated', handleLocalCacheUpdate);
     return () => window.removeEventListener('localCacheUpdated', handleLocalCacheUpdate);
   }, []);
@@ -141,13 +141,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
     setIsLoading(true);
-    
+
     // Timer de seguridad: si después de 2 segundos no hay datos, usar cache y desbloquear
     const safetyTimer = setTimeout(() => {
       console.warn('⏰ Timeout de carga - desbloqueando UI');
       setIsLoading(false);
     }, 2000);
-    
+
     // Función para combinar Firestore + cache local
     const combineData = (firestoreData: AppState) => {
       const localMonitorings = getFromLocalCache('monitorings');
@@ -160,19 +160,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         prescriptions: mergePrescriptions(firestoreData.prescriptions, localPrescriptions)
       };
     };
-    
+
     const unsubscribe = Storage.subscribeToData(
       dataOwnerId,
       (newData) => {
         clearTimeout(safetyTimer);
-        
+
         // Combinar datos de Firestore con cache local (pendientes de sincronización)
         const combinedData = combineData(newData);
-        
+
         setData(combinedData);
         setIsLoading(false);
         setConnectionError(null);
-        
+
         // CRITICAL: Guardar en cache optimizado para próximo cold-start offline
         saveCachedData(newData);
       },
@@ -184,17 +184,17 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         else setConnectionError("Error de conexión con la base de datos.");
       }
     );
-    
+
     return () => {
       clearTimeout(safetyTimer);
       unsubscribe();
     };
   }, [dataOwnerId]);
-  
+
   // Recombinar datos cuando cambia el cache local
   useEffect(() => {
     if (localCacheVersion === 0) return; // Skip inicial
-    
+
     setData(prevData => {
       const localMonitorings = getFromLocalCache('monitorings');
       const localLotSummaries = getFromLocalCache('lotSummaries');

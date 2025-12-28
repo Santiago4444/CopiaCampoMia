@@ -7,6 +7,36 @@ import { Budget } from '../../types/models';
 import * as BudgetRepo from '../../services/repositories/budgetRepository';
 import { getBudgets } from '../../services/repositories/budgetRepository';
 
+
+const InputCell = ({ value, onChange }: { value: number | undefined; onChange: (val: string) => void }) => {
+    const [localValue, setLocalValue] = useState((value === 0 || !value) ? '' : value.toString());
+
+    useEffect(() => {
+        const numLocal = parseFloat(localValue) || 0;
+        const numProp = value || 0;
+        if (numLocal !== numProp) {
+            setLocalValue((value === 0 || !value) ? '' : value.toString());
+        }
+    }, [value]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setLocalValue(e.target.value);
+        onChange(e.target.value);
+    };
+
+    return (
+        <td className="p-1 min-w-[70px]">
+            <input
+                type="number"
+                className="w-full text-center bg-transparent border-none focus:ring-1 focus:ring-green-500 rounded text-xs py-1 px-0"
+                placeholder="0"
+                value={localValue}
+                onChange={handleChange}
+            />
+        </td>
+    );
+};
+
 export const BudgetManager: React.FC = () => {
     const { data, userCompanies } = useData();
     const { showNotification } = useUI();
@@ -172,7 +202,7 @@ export const BudgetManager: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                        {data.crops.map(crop => {
+                        {[...data.crops].sort((a, b) => a.name.localeCompare(b.name)).map(crop => {
                             const budget = budgets[crop.id] || {
                                 herbicidas: 0, insecticidas: 0, fungicidas: 0, fertilizantes: 0,
                                 coadyuvantes: 0, otrosAgroquimicos: 0, semillas: 0,
@@ -186,50 +216,38 @@ export const BudgetManager: React.FC = () => {
                             const sumLabor = (budget.pulverizacionTerrestre || 0) + (budget.pulverizacionSelectiva || 0) + (budget.pulverizacionAerea || 0) + (budget.siembra || 0) + (budget.otrasLabores || 0);
                             const total = sumAgro + sumFert + sumSeed + sumLabor;
 
-                            const InputCell = ({ field }: { field: keyof Budget }) => (
-                                <td className="p-1 min-w-[70px]">
-                                    <input
-                                        type="number"
-                                        className="w-full text-center bg-transparent border-none focus:ring-1 focus:ring-green-500 rounded text-xs py-1 px-0"
-                                        placeholder="0"
-                                        value={budget[field] || ''}
-                                        onChange={(e) => handleBudgetChange(crop.id, field, e.target.value)}
-                                    />
-                                </td>
-                            );
-
                             return (
                                 <tr key={crop.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 group">
                                     <td className="p-3 font-medium sticky left-0 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700/50 border-r dark:border-gray-700 z-10">
                                         <div className="flex flex-col">
                                             <span>{crop.name}</span>
-                                            <span className="text-[10px] text-gray-500 font-bold mt-0.5">Total: ${total.toFixed(0)}</span>
+                                            <span className="text-[10px] text-gray-500 font-bold mt-0.5">Total: ${total.toFixed(2)}</span>
                                         </div>
                                     </td>
 
                                     {/* Agroquimicos */}
-                                    <InputCell field="herbicidas" />
-                                    <InputCell field="insecticidas" />
-                                    <InputCell field="fungicidas" />
-                                    <InputCell field="coadyuvantes" />
-                                    <InputCell field="otrosAgroquimicos" />
-                                    <td className="p-2 text-center text-xs font-bold text-blue-600 bg-blue-50/50 dark:bg-blue-900/10 border-r border-gray-100 dark:border-gray-700">${sumAgro.toFixed(0)}</td>
+                                    <InputCell value={budget.herbicidas} onChange={(v) => handleBudgetChange(crop.id, 'herbicidas', v)} />
+                                    <InputCell value={budget.insecticidas} onChange={(v) => handleBudgetChange(crop.id, 'insecticidas', v)} />
+                                    <InputCell value={budget.fungicidas} onChange={(v) => handleBudgetChange(crop.id, 'fungicidas', v)} />
+                                    <InputCell value={budget.coadyuvantes} onChange={(v) => handleBudgetChange(crop.id, 'coadyuvantes', v)} />
+                                    <InputCell value={budget.otrosAgroquimicos} onChange={(v) => handleBudgetChange(crop.id, 'otrosAgroquimicos', v)} />
+                                    <td className="p-2 text-center text-xs font-bold text-blue-600 bg-blue-50/50 dark:bg-blue-900/10 border-r border-gray-100 dark:border-gray-700">${sumAgro.toFixed(2)}</td>
 
                                     {/* Fertilizantes */}
-                                    <InputCell field="fertilizantes" />
-                                    <td className="p-2 text-center text-xs font-bold text-orange-600 bg-orange-50/50 dark:bg-orange-900/10 border-r border-gray-100 dark:border-gray-700">${sumFert.toFixed(0)}</td>
+                                    <InputCell value={budget.fertilizantes} onChange={(v) => handleBudgetChange(crop.id, 'fertilizantes', v)} />
+                                    <td className="p-2 text-center text-xs font-bold text-orange-600 bg-orange-50/50 dark:bg-orange-900/10 border-r border-gray-100 dark:border-gray-700">${sumFert.toFixed(2)}</td>
 
                                     {/* Semillas */}
-                                    <InputCell field="semillas" />
-                                    <td className="p-2 text-center text-xs font-bold text-green-600 bg-green-50/50 dark:bg-green-900/10 border-r border-gray-100 dark:border-gray-700">${sumSeed.toFixed(0)}</td>
+                                    <InputCell value={budget.semillas} onChange={(v) => handleBudgetChange(crop.id, 'semillas', v)} />
+                                    <td className="p-2 text-center text-xs font-bold text-green-600 bg-green-50/50 dark:bg-green-900/10 border-r border-gray-100 dark:border-gray-700">${sumSeed.toFixed(2)}</td>
 
                                     {/* Labores */}
-                                    <InputCell field="pulverizacionTerrestre" />
-                                    <InputCell field="pulverizacionSelectiva" />
-                                    <InputCell field="pulverizacionAerea" />
-                                    <InputCell field="siembra" />
-                                    <InputCell field="otrasLabores" />
-                                    <td className="p-2 text-center text-xs font-bold text-purple-600 bg-purple-50/50 dark:bg-purple-900/10 border-r border-gray-100 dark:border-gray-700">${sumLabor.toFixed(0)}</td>
+                                    <InputCell value={budget.pulverizacionTerrestre} onChange={(v) => handleBudgetChange(crop.id, 'pulverizacionTerrestre', v)} />
+                                    <InputCell value={budget.pulverizacionSelectiva} onChange={(v) => handleBudgetChange(crop.id, 'pulverizacionSelectiva', v)} />
+                                    <InputCell value={budget.pulverizacionAerea} onChange={(v) => handleBudgetChange(crop.id, 'pulverizacionAerea', v)} />
+                                    <InputCell value={budget.siembra} onChange={(v) => handleBudgetChange(crop.id, 'siembra', v)} />
+                                    <InputCell value={budget.otrasLabores} onChange={(v) => handleBudgetChange(crop.id, 'otrasLabores', v)} />
+                                    <td className="p-2 text-center text-xs font-bold text-purple-600 bg-purple-50/50 dark:bg-purple-900/10 border-r border-gray-100 dark:border-gray-700">${sumLabor.toFixed(2)}</td>
 
                                     <td className="p-2 text-center sticky right-0 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700/50 z-10 border-l dark:border-gray-700">
                                         <button

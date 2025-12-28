@@ -18,7 +18,7 @@ export const CropManager: React.FC<{ crops: Crop[] }> = ({ crops }) => {
 
   const filteredItems = crops
     .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
   const openAdd = () => { setEditingItem(null); setFormData({ name: '' }); setIsModalOpen(true); };
   const openEdit = (item: Crop) => { setEditingItem(item); setFormData({ name: item.name }); setIsModalOpen(true); };
@@ -65,7 +65,7 @@ export const TaskManager: React.FC<{ tasks: Task[] }> = ({ tasks }) => {
 
   const filteredItems = tasks
     .filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
   const openAdd = () => { setEditingItem(null); setFormData({ name: '', price: 0, category: 'Otras Labores' }); setIsModalOpen(true); };
   const openEdit = (item: Task) => { setEditingItem(item); setFormData({ name: item.name, price: item.pricePerHectare || 0, category: item.category || 'Otras Labores' }); setIsModalOpen(true); };

@@ -36,7 +36,7 @@ export const ChartsSection = forwardRef<HTMLDivElement, ChartsSectionProps>(({
 
   const textClass = forceLightMode
     ? "text-gray-900"
-    : "text-gray-500 dark:text-gray-400";
+    : "text-gray-500 dark:text-blue-300";
 
   const titleClass = `text-sm font-bold uppercase tracking-wider mb-4 ${textClass}`;
   const gridColor = forceLightMode ? "#e5e7eb" : "#374151";
@@ -45,7 +45,7 @@ export const ChartsSection = forwardRef<HTMLDivElement, ChartsSectionProps>(({
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className={`p-3 rounded-lg shadow-lg border text-xs ${forceLightMode ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700 text-gray-200'}`}>
+        <div className={`p-3 rounded-lg shadow-lg border text-xs ${forceLightMode ? 'bg-white border-gray-200' : 'bg-gray-800 border-gray-700 text-blue-200'}`}>
           <p className="font-bold mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 mb-1">
@@ -70,7 +70,7 @@ export const ChartsSection = forwardRef<HTMLDivElement, ChartsSectionProps>(({
       <div className={`${containerClass} min-h-[350px] flex flex-col`}>
         <div className="flex justify-between items-center mb-2">
           <h3 className={titleClass}>Evolución Lotes (30 días)</h3>
-          <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500">Tendencia Acumulada</span>
+          <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500 dark:text-blue-300">Tendencia Acumulada</span>
         </div>
 
         <div className="flex-1 w-full min-h-0">
@@ -141,7 +141,7 @@ export const ChartsSection = forwardRef<HTMLDivElement, ChartsSectionProps>(({
       <div className={`${containerClass} min-h-[350px] flex flex-col`}>
         <div className="flex justify-between items-center mb-2">
           <h3 className={titleClass}>Dinámica de Plagas</h3>
-          <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500">Detecciones Diarias</span>
+          <span className="text-[10px] bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded text-gray-500 dark:text-blue-300">Detecciones Diarias</span>
         </div>
 
         {topPests.length > 0 ? (
@@ -180,7 +180,7 @@ export const ChartsSection = forwardRef<HTMLDivElement, ChartsSectionProps>(({
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-400 text-xs italic">
+          <div className="flex-1 flex items-center justify-center text-gray-400 dark:text-blue-300 text-xs italic">
             Sin actividad de plagas registrada en el período.
           </div>
         )}

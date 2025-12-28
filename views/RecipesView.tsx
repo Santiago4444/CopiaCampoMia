@@ -12,6 +12,7 @@ import { jsPDF } from 'jspdf';
 import { WeatherWidget } from '../components/weather/WeatherWidget';
 import { TourMode } from '../components/recipes/TourMode';
 import { ExecutionMode } from '../components/recipes/ExecutionMode';
+import { getUserRole, getRoleColorClass, getRoleBgClass } from '../utils/roleUtils';
 
 // --- SUB-COMPONENT: BUDGET MONITOR (Redesigned) ---
 // BudgetMonitor REMOVED
@@ -20,7 +21,7 @@ export const RecipesView: React.FC = () => {
     const { data, userCompanies, dataOwnerId, dataOwnerName } = useData();
     const { showNotification } = useUI();
     const { currentUser } = useAuth();
-    const [viewMode, setViewMode] = useState<'new' | 'history' | 'tour' | 'execution'>('new');
+    const [viewMode, setViewMode] = useState<'new' | 'history' | 'tour' | 'execution'>('tour');
     const [isSaving, setIsSaving] = useState(false); // Evita doble-submit
 
     const { isRecording, audioBlobUrl, audioDuration, toggleRecording, resetRecording } = useMediaRecorder();
@@ -813,7 +814,7 @@ export const RecipesView: React.FC = () => {
                 <div className="flex p-1 bg-gray-100 dark:bg-gray-800 rounded-xl mb-6 self-start">
                     {!isClient && (
                         <>
-                            <button onClick={() => setViewMode('new')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'new' ? 'bg-white dark:bg-gray-700 text-agro-600 dark:text-agro-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>INDIVIDUAL</button>
+                            {/* <button onClick={() => setViewMode('new')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'new' ? 'bg-white dark:bg-gray-700 text-agro-600 dark:text-agro-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>INDIVIDUAL</button> */}
                             <button onClick={() => setViewMode('tour')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'tour' ? 'bg-white dark:bg-gray-700 text-agro-600 dark:text-agro-400 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}>RECORRIDA</button>
                         </>
                     )}
@@ -896,11 +897,11 @@ export const RecipesView: React.FC = () => {
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-sm font-bold text-gray-500 uppercase mb-4 border-b pb-2">1. Selección de Lotes</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                            <Select label="Empresa" options={userCompanies.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))} value={selectedCompanyId} onChange={(e) => { setSelectedCompanyId(e.target.value); setSelectedFieldId(''); setSelectedPlotIds([]); }} placeholder="Seleccionar Empresa..." disabled={isClient} />
-                            <Select label="Campo" options={availableFields.sort((a, b) => a.name.localeCompare(b.name)).map(f => ({ value: f.id, label: f.name }))} value={selectedFieldId} onChange={(e) => { setSelectedFieldId(e.target.value); setSelectedPlotIds([]); }} disabled={!selectedCompanyId} placeholder="Seleccionar Campo..." />
+                            <Select label="Empresa" options={userCompanies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={selectedCompanyId} onChange={(e) => { setSelectedCompanyId(e.target.value); setSelectedFieldId(''); setSelectedPlotIds([]); }} placeholder="Seleccionar Empresa..." disabled={isClient} />
+                            <Select label="Campo" options={availableFields.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={selectedFieldId} onChange={(e) => { setSelectedFieldId(e.target.value); setSelectedPlotIds([]); }} disabled={!selectedCompanyId} placeholder="Seleccionar Campo..." />
                         </div>
                         {selectedFieldId && (
-                            <MultiSelect label="Lotes a Aplicar" options={availablePlots.sort((a, b) => a.name.localeCompare(b.name)).map(p => ({ value: p.id, label: p.name }))} selectedValues={selectedPlotIds} onChange={setSelectedPlotIds} placeholder="Seleccionar Lotes..." />
+                            <MultiSelect label="Lotes a Aplicar" options={availablePlots.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(p => ({ value: p.id, label: p.name }))} selectedValues={selectedPlotIds} onChange={setSelectedPlotIds} placeholder="Seleccionar Lotes..." />
                         )}
                     </div>
 
@@ -912,7 +913,7 @@ export const RecipesView: React.FC = () => {
                             <div className="flex-1 w-full">
                                 <Select
                                     label="Insumo"
-                                    options={data.agrochemicals.sort((a, b) => a.name.localeCompare(b.name)).map(a => ({ value: a.id, label: `${a.name} (${a.type})` }))}
+                                    options={data.agrochemicals.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(a => ({ value: a.id, label: `${a.name} (${a.type})` }))}
                                     value={currentItemId}
                                     onChange={(e) => {
                                         const id = e.target.value;
@@ -970,7 +971,7 @@ export const RecipesView: React.FC = () => {
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                         <h3 className="text-sm font-bold text-gray-500 uppercase mb-4 border-b pb-2">3. Labores e Indicaciones</h3>
                         <div className="space-y-4">
-                            <MultiSelect label="Tareas a Realizar" options={data.tasks.sort((a, b) => a.name.localeCompare(b.name)).map(t => ({ value: t.id, label: t.name }))} selectedValues={selectedTaskIds} onChange={setSelectedTaskIds} placeholder="Seleccionar labores..." />
+                            <MultiSelect label="Tareas a Realizar" options={data.tasks.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(t => ({ value: t.id, label: t.name }))} selectedValues={selectedTaskIds} onChange={setSelectedTaskIds} placeholder="Seleccionar labores..." />
                             {selectedTaskIds.length > 0 && (
                                 <div className="space-y-2 mt-2">
                                     {selectedTaskIds.map((taskId) => {
@@ -1017,8 +1018,8 @@ export const RecipesView: React.FC = () => {
                 <div className="space-y-4 animate-fade-in relative">
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-4 gap-2">
                         <input type="date" className="px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-700 text-xs dark:text-white" value={historyFilter.dateFrom} onChange={e => setHistoryFilter({ ...historyFilter, dateFrom: e.target.value })} placeholder="Desde" />
-                        <Select label="" options={userCompanies.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))} value={historyFilter.companyId} onChange={e => setHistoryFilter({ ...historyFilter, companyId: e.target.value, fieldId: '' })} placeholder="Empresa..." className="text-xs py-2" />
-                        <Select label="" options={data.fields.filter(f => f.companyId === historyFilter.companyId).sort((a, b) => a.name.localeCompare(b.name)).map(f => ({ value: f.id, label: f.name }))} value={historyFilter.fieldId} onChange={e => setHistoryFilter({ ...historyFilter, fieldId: e.target.value })} disabled={!historyFilter.companyId} placeholder="Campo..." className="text-xs py-2" />
+                        <Select label="" options={userCompanies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={historyFilter.companyId} onChange={e => setHistoryFilter({ ...historyFilter, companyId: e.target.value, fieldId: '' })} placeholder="Empresa..." className="text-xs py-2" />
+                        <Select label="" options={data.fields.filter(f => f.companyId === historyFilter.companyId).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={historyFilter.fieldId} onChange={e => setHistoryFilter({ ...historyFilter, fieldId: e.target.value })} disabled={!historyFilter.companyId} placeholder="Campo..." className="text-xs py-2" />
                         <Button variant="ghost" onClick={() => setHistoryFilter({ companyId: '', fieldId: '', dateFrom: '', dateTo: '' })} className="text-xs">Limpiar</Button>
                     </div>
 
@@ -1146,7 +1147,7 @@ export const RecipesView: React.FC = () => {
                                                 <div className="mb-4"><h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 text-xs uppercase">Labores</h4><ul className="list-disc list-inside text-gray-600 dark:text-gray-400">{(recipe.taskNames as string[])?.map((t, i) => <li key={i}>{t}</li>)}</ul></div>
                                             )}
                                             {recipe.notes && (
-                                                <div className="mb-4"><h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 text-xs uppercase">Observaciones</h4><p className="bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700 italic text-gray-600 dark:text-gray-300">{recipe.notes}</p></div>
+                                                <div className="mb-4"><h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 text-xs uppercase">Observaciones</h4><p className={`bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700 italic ${getRoleColorClass(getUserRole(recipe.ownerId, data.users, dataOwnerId))}`}>{recipe.notes}</p></div>
                                             )}
                                             <div className="flex justify-end pt-2 gap-2 flex-wrap">
                                                 <button onClick={(e) => handleOpenAddPlotModal(recipe, e)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-xs flex items-center font-medium px-3 py-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors" title="Agregar lotes del mismo campo"><PlusCircle className="w-4 h-4 mr-1" /> Sumar Lotes</button>
@@ -1211,7 +1212,7 @@ export const RecipesView: React.FC = () => {
                             label="Lotes Disponibles"
                             options={data.plots
                                 .filter(p => p.fieldId === targetRecipeForAdd.fieldId && !targetRecipeForAdd.plotIds.includes(p.id))
-                                .sort((a, b) => a.name.localeCompare(b.name))
+                                .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
                                 .map(p => ({ value: p.id, label: p.name }))}
                             selectedValues={plotsToAdd}
                             onChange={setPlotsToAdd}

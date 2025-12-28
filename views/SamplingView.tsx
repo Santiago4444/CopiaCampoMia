@@ -164,7 +164,7 @@ export const SamplingView: React.FC = () => {
                         )}
                     </div>
 
-                    <div><MultiSelect label="Plagas Detectadas" options={data.pests.sort((a, b) => a.name.localeCompare(b.name)).map(p => ({ value: p.id, label: p.name }))} selectedValues={form.selectedPestIds} onChange={form.handlePestChange} placeholder="Seleccionar plagas..." /></div>
+                    <div><MultiSelect label="Plagas Detectadas" options={data.pests.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(p => ({ value: p.id, label: p.name }))} selectedValues={form.selectedPestIds} onChange={form.handlePestChange} placeholder="Seleccionar plagas..." /></div>
 
                     {form.selectedPestIds.length > 0 && (
                         <div className="space-y-2 border-t border-b border-gray-100 dark:border-gray-700 py-4">

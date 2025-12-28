@@ -130,7 +130,7 @@ export const DashboardView: React.FC = () => {
         return data.crops
             .filter(c => assignedCropIds.has(c.id))
             .map(c => ({ value: c.id, label: c.name }))
-            .sort((a, b) => a.label.localeCompare(b.label));
+            .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
     }, [data.assignments, data.plots, data.fields, data.crops, selectedSeasonId, effectiveCompanyId, selectedFieldId]);
 
     // Auto-clear crop selection if no longer valid in current context
@@ -246,7 +246,7 @@ export const DashboardView: React.FC = () => {
                 });
             }
         });
-        return Array.from(pests).sort();
+        return Array.from(pests).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
     }, [filteredMonitorings, data.pests]);
 
     useEffect(() => {
@@ -261,7 +261,7 @@ export const DashboardView: React.FC = () => {
         tracks.forEach(t => {
             if (t.userName) users.add(t.userName);
         });
-        return Array.from(users).sort();
+        return Array.from(users).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
     }, [tracks]);
 
     // Default select first user if tracks exist and no user selected
@@ -886,9 +886,9 @@ export const DashboardView: React.FC = () => {
 
             <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
-                    <Select label="" placeholder="Campaña..." options={data.seasons.sort((a, b) => a.name.localeCompare(b.name)).map(s => ({ value: s.id, label: s.name }))} value={selectedSeasonId} onChange={(e) => setSelectedSeasonId(e.target.value)} className="text-xs h-10" />
-                    <Select label="" placeholder="Empresa..." options={userCompanies.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))} value={effectiveCompanyId || ''} onChange={(e) => { setSelectedCompanyId(e.target.value); setSelectedFieldId(''); }} className="text-xs h-10" disabled={currentUser?.role === 'company'} />
-                    <Select label="" placeholder="Campo..." options={availableFields.sort((a, b) => a.name.localeCompare(b.name)).map(f => ({ value: f.id, label: f.name }))} value={selectedFieldId} onChange={(e) => { setSelectedFieldId(e.target.value); }} disabled={!effectiveCompanyId} className="text-xs h-10" />
+                    <Select label="" placeholder="Campaña..." options={data.seasons.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(s => ({ value: s.id, label: s.name }))} value={selectedSeasonId} onChange={(e) => setSelectedSeasonId(e.target.value)} className="text-xs h-10" />
+                    <Select label="" placeholder="Empresa..." options={userCompanies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={effectiveCompanyId || ''} onChange={(e) => { setSelectedCompanyId(e.target.value); setSelectedFieldId(''); }} className="text-xs h-10" disabled={currentUser?.role === 'company'} />
+                    <Select label="" placeholder="Campo..." options={availableFields.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={selectedFieldId} onChange={(e) => { setSelectedFieldId(e.target.value); }} disabled={!effectiveCompanyId} className="text-xs h-10" />
 
                     {/* DYNAMIC CROP SELECTOR */}
                     <Select label="" placeholder="Cultivo..." options={availableCropsForFilter} value={selectedCropId} onChange={(e) => setSelectedCropId(e.target.value)} className="text-xs h-10" />

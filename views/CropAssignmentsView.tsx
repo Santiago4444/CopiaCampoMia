@@ -91,7 +91,7 @@ export const CropAssignmentsView: React.FC = () => {
         if (selectedFieldId && p.fieldId !== selectedFieldId) return false;
 
         return true;
-    }).sort((a, b) => a.name.localeCompare(b.name));
+    }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
     // Helper to get current assignment details for display
     const getAssignmentDetails = (plotId: string) => {
@@ -116,7 +116,7 @@ export const CropAssignmentsView: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <Select
                         label=""
-                        options={data.seasons.sort((a, b) => a.name.localeCompare(b.name)).map(s => ({ value: s.id, label: s.name }))}
+                        options={data.seasons.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(s => ({ value: s.id, label: s.name }))}
                         value={selectedSeasonId}
                         onChange={(e) => setSelectedSeasonId(e.target.value)}
                         placeholder="Seleccionar Campaña..."
@@ -124,7 +124,7 @@ export const CropAssignmentsView: React.FC = () => {
                     />
                     <Select
                         label=""
-                        options={userCompanies.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))}
+                        options={userCompanies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))}
                         value={selectedCompanyId}
                         onChange={(e) => { setSelectedCompanyId(e.target.value); setSelectedFieldId(''); }}
                         placeholder="Todas las Empresas"
@@ -132,7 +132,7 @@ export const CropAssignmentsView: React.FC = () => {
                     />
                     <Select
                         label=""
-                        options={availableFieldsForFilter.sort((a, b) => a.name.localeCompare(b.name)).map(f => ({ value: f.id, label: f.name }))}
+                        options={availableFieldsForFilter.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))}
                         value={selectedFieldId}
                         onChange={(e) => setSelectedFieldId(e.target.value)}
                         placeholder="Todos los Campos"
@@ -219,7 +219,7 @@ export const CropAssignmentsView: React.FC = () => {
 
                         <Select
                             label="Cultivo"
-                            options={data.crops.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))}
+                            options={data.crops.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))}
                             value={editingAssignment.cropId}
                             onChange={(e) => setEditingAssignment({ ...editingAssignment, cropId: e.target.value })}
                             placeholder="Seleccionar Cultivo..."

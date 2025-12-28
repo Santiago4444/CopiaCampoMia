@@ -88,7 +88,7 @@ export const PlotManager: React.FC<PlotManagerProps> = ({ plots, fields, compani
         if (filterFieldId && item.fieldId !== filterFieldId) matchesHierarchy = false;
 
         return matchesSearch && matchesHierarchy;
-    }).sort((a, b) => a.name.localeCompare(b.name));
+    }).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
     // --- CRUD HANDLERS ---
     const openAdd = () => {
@@ -337,10 +337,10 @@ export const PlotManager: React.FC<PlotManagerProps> = ({ plots, fields, compani
                     <div className="px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 space-y-3">
                         <div className="flex flex-col sm:flex-row gap-3">
                             <div className="flex-1">
-                                <Select label="" placeholder="Todas las Empresas..." options={companies.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))} value={filterCompanyId} onChange={(e) => { setFilterCompanyId(e.target.value); setFilterFieldId(''); }} className="text-sm" />
+                                <Select label="" placeholder="Todas las Empresas..." options={companies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={filterCompanyId} onChange={(e) => { setFilterCompanyId(e.target.value); setFilterFieldId(''); }} className="text-sm" />
                             </div>
                             <div className="flex-1">
-                                <Select label="" placeholder="Todos los Campos..." options={availableFieldsForFilter.sort((a, b) => a.name.localeCompare(b.name)).map(f => ({ value: f.id, label: f.name }))} value={filterFieldId} onChange={(e) => setFilterFieldId(e.target.value)} disabled={!filterCompanyId && companies.length > 0} className="text-sm" />
+                                <Select label="" placeholder="Todos los Campos..." options={availableFieldsForFilter.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={filterFieldId} onChange={(e) => setFilterFieldId(e.target.value)} disabled={!filterCompanyId && companies.length > 0} className="text-sm" />
                             </div>
                         </div>
 
@@ -399,8 +399,8 @@ export const PlotManager: React.FC<PlotManagerProps> = ({ plots, fields, compani
             {/* Add/Edit Modal */}
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingPlotId ? "Editar Lote" : "Nuevo Lote"}>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <Select label="Empresa" options={companies.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))} value={formData.companyId} onChange={e => setFormData({ ...formData, companyId: e.target.value, fieldId: '' })} required placeholder="Seleccionar Empresa" />
-                    <Select label="Campo" options={availableFormFields.sort((a, b) => a.name.localeCompare(b.name)).map(f => ({ value: f.id, label: f.name }))} value={formData.fieldId} onChange={e => setFormData({ ...formData, fieldId: e.target.value })} required disabled={!formData.companyId} placeholder="Seleccionar Campo" />
+                    <Select label="Empresa" options={companies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={formData.companyId} onChange={e => setFormData({ ...formData, companyId: e.target.value, fieldId: '' })} required placeholder="Seleccionar Empresa" />
+                    <Select label="Campo" options={availableFormFields.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={formData.fieldId} onChange={e => setFormData({ ...formData, fieldId: e.target.value })} required disabled={!formData.companyId} placeholder="Seleccionar Campo" />
                     <Input label="Nombre del Lote" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} autoFocus required />
                     <div className="grid grid-cols-2 gap-3">
                         <Input label="Hectáreas" type="number" value={formData.hectares} onChange={e => setFormData({ ...formData, hectares: e.target.value })} placeholder="0" />

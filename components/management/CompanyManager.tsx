@@ -27,7 +27,7 @@ export const CompanyManager: React.FC<CompanyManagerProps> = ({ companies }) => 
 
   const filteredItems = companies
     .filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
   const openAdd = () => {
     setEditingItem(null);
@@ -42,30 +42,30 @@ export const CompanyManager: React.FC<CompanyManagerProps> = ({ companies }) => 
   };
 
   const handleDeleteClick = (id: string) => {
-      setConfirmPassword('');
-      setPasswordError('');
-      setDeleteStep(1); // Reset to step 1
-      setDeleteId(id);
+    setConfirmPassword('');
+    setPasswordError('');
+    setDeleteStep(1); // Reset to step 1
+    setDeleteId(id);
   };
 
   const confirmDelete = async () => {
     if (!deleteId || !currentUser) return;
 
     if (confirmPassword !== currentUser.password) {
-        setPasswordError('Contraseña incorrecta');
-        return;
+      setPasswordError('Contraseña incorrecta');
+      return;
     }
 
     setIsDeleting(true);
     try {
-        // Usar Deep Delete
-        await DeepDelete.deepDeleteCompany(deleteId);
-        setDeleteId(null);
+      // Usar Deep Delete
+      await DeepDelete.deepDeleteCompany(deleteId);
+      setDeleteId(null);
     } catch (error) {
-        console.error("Error deleting company:", error);
-        alert("Ocurrió un error al eliminar la empresa.");
+      console.error("Error deleting company:", error);
+      alert("Ocurrió un error al eliminar la empresa.");
     } finally {
-        setIsDeleting(false);
+      setIsDeleting(false);
     }
   };
 
@@ -95,19 +95,19 @@ export const CompanyManager: React.FC<CompanyManagerProps> = ({ companies }) => 
       {/* Search */}
       <div className="px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input 
-                type="text" 
-                placeholder="Buscar empresa..." 
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-agro-500 outline-none transition-all text-sm dark:text-gray-200"
-            />
-            {searchTerm && (
-                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <X className="w-4 h-4" />
-                </button>
-            )}
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Buscar empresa..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-agro-500 outline-none transition-all text-sm dark:text-gray-200"
+          />
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -141,77 +141,77 @@ export const CompanyManager: React.FC<CompanyManagerProps> = ({ companies }) => 
       </Modal>
 
       {/* Delete Confirmation Modal (2 Steps) */}
-      <Modal isOpen={!!deleteId} onClose={() => { if(!isDeleting) setDeleteId(null); }} title={deleteStep === 1 ? "Eliminar Empresa" : "Confirmación de Seguridad"}>
-          <div className="space-y-4">
-              {deleteStep === 1 && (
-                  <>
-                      <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg flex items-start gap-3 border border-red-100 dark:border-red-800">
-                          <AlertTriangle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
-                          <div className="space-y-2">
-                              <p className="font-bold text-red-800 dark:text-red-300 text-sm">¡Atención! Acción Destructiva</p>
-                              <p className="text-red-700 dark:text-red-400 text-sm leading-relaxed">
-                                  Estás a punto de eliminar una <strong>Empresa</strong> completa. Esto borrará permanentemente:
-                              </p>
-                              <ul className="list-disc list-inside text-xs text-red-600 dark:text-red-400 pl-1 space-y-1">
-                                  <li>Todos los Campos asociados.</li>
-                                  <li>Todos los Lotes y su historial.</li>
-                                  <li>Miles de fotos, audios y monitoreos.</li>
-                                  <li>Recetas agronómicas y cierres.</li>
-                              </ul>
-                          </div>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 text-center">¿Realmente deseas continuar?</p>
-                      <div className="flex justify-end gap-2 pt-2">
-                          <Button variant="ghost" onClick={() => setDeleteId(null)}>Cancelar</Button>
-                          <Button variant="danger" onClick={() => setDeleteStep(2)}>Sí, Continuar</Button>
-                      </div>
-                  </>
-              )}
+      <Modal isOpen={!!deleteId} onClose={() => { if (!isDeleting) setDeleteId(null); }} title={deleteStep === 1 ? "Eliminar Empresa" : "Confirmación de Seguridad"}>
+        <div className="space-y-4">
+          {deleteStep === 1 && (
+            <>
+              <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg flex items-start gap-3 border border-red-100 dark:border-red-800">
+                <AlertTriangle className="w-6 h-6 text-red-600 shrink-0 mt-0.5" />
+                <div className="space-y-2">
+                  <p className="font-bold text-red-800 dark:text-red-300 text-sm">¡Atención! Acción Destructiva</p>
+                  <p className="text-red-700 dark:text-red-400 text-sm leading-relaxed">
+                    Estás a punto de eliminar una <strong>Empresa</strong> completa. Esto borrará permanentemente:
+                  </p>
+                  <ul className="list-disc list-inside text-xs text-red-600 dark:text-red-400 pl-1 space-y-1">
+                    <li>Todos los Campos asociados.</li>
+                    <li>Todos los Lotes y su historial.</li>
+                    <li>Miles de fotos, audios y monitoreos.</li>
+                    <li>Recetas agronómicas y cierres.</li>
+                  </ul>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 text-center">¿Realmente deseas continuar?</p>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" onClick={() => setDeleteId(null)}>Cancelar</Button>
+                <Button variant="danger" onClick={() => setDeleteStep(2)}>Sí, Continuar</Button>
+              </div>
+            </>
+          )}
 
-              {deleteStep === 2 && (
-                  <>
-                      {!isDeleting ? (
-                          <>
-                              <div className="flex flex-col items-center justify-center py-2 text-center">
-                                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
-                                      <ShieldCheck className="w-6 h-6 text-gray-500 dark:text-gray-400" />
-                                  </div>
-                                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 px-4">
-                                      Por seguridad, ingrese su contraseña de administrador para confirmar el borrado masivo.
-                                  </p>
-                              </div>
-                              
-                              <Input 
-                                  label="Contraseña del Administrador"
-                                  type="password"
-                                  placeholder="Su contraseña actual"
-                                  value={confirmPassword}
-                                  onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
-                                  error={passwordError}
-                                  autoFocus
-                              />
+          {deleteStep === 2 && (
+            <>
+              {!isDeleting ? (
+                <>
+                  <div className="flex flex-col items-center justify-center py-2 text-center">
+                    <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
+                      <ShieldCheck className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 px-4">
+                      Por seguridad, ingrese su contraseña de administrador para confirmar el borrado masivo.
+                    </p>
+                  </div>
 
-                              <div className="flex justify-between items-center pt-4">
-                                  <Button variant="ghost" onClick={() => setDeleteStep(1)} className="text-xs">
-                                      <ArrowLeft className="w-3 h-3 mr-1" /> Volver
-                                  </Button>
-                                  <Button variant="danger" onClick={confirmDelete} disabled={!confirmPassword}>
-                                      Eliminar Definitivamente
-                                  </Button>
-                              </div>
-                          </>
-                      ) : (
-                          <div className="flex flex-col items-center justify-center p-8 space-y-4">
-                              <Loader2 className="w-10 h-10 text-agro-600 dark:text-agro-400 animate-spin" />
-                              <div className="text-center">
-                                  <p className="font-bold text-gray-800 dark:text-gray-200">Limpiando Base de Datos</p>
-                                  <p className="text-xs text-gray-500 mt-1">Eliminando archivos y registros en cascada...</p>
-                              </div>
-                          </div>
-                      )}
-                  </>
+                  <Input
+                    label="Contraseña del Administrador"
+                    type="password"
+                    placeholder="Su contraseña actual"
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setPasswordError(''); }}
+                    error={passwordError}
+                    autoFocus
+                  />
+
+                  <div className="flex justify-between items-center pt-4">
+                    <Button variant="ghost" onClick={() => setDeleteStep(1)} className="text-xs">
+                      <ArrowLeft className="w-3 h-3 mr-1" /> Volver
+                    </Button>
+                    <Button variant="danger" onClick={confirmDelete} disabled={!confirmPassword}>
+                      Eliminar Definitivamente
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 space-y-4">
+                  <Loader2 className="w-10 h-10 text-agro-600 dark:text-agro-400 animate-spin" />
+                  <div className="text-center">
+                    <p className="font-bold text-gray-800 dark:text-gray-200">Limpiando Base de Datos</p>
+                    <p className="text-xs text-gray-500 mt-1">Eliminando archivos y registros en cascada...</p>
+                  </div>
+                </div>
               )}
-          </div>
+            </>
+          )}
+        </div>
       </Modal>
     </div>
   );

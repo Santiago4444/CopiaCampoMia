@@ -1,4 +1,5 @@
 
+import { User } from './auth';
 import {
   Company, Field, Plot, Season, Pest, Crop, Agrochemical, Task,
   Prescription, PrescriptionTemplate, PlotAssignment, MonitoringRecord, LotSummary
@@ -18,6 +19,7 @@ export interface AppState {
   assignments: PlotAssignment[];
   monitorings: MonitoringRecord[];
   lotSummaries: LotSummary[];
+  users: User[];
 }
 
 export type ViewState =

@@ -34,7 +34,7 @@ export const AgrochemicalManager: React.FC<AgrochemicalManagerProps> = ({ agroch
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.activeIngredient?.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
   const TYPES = [
     { value: 'Herbicida', label: 'Herbicida' },

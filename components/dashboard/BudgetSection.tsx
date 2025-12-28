@@ -96,20 +96,20 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({ seasonId, companyI
                             >
                                 <div className="mb-2 sm:mb-0">
                                     <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">{metric.cropName}</h3>
-                                    <p className="text-xs text-gray-500">
-                                        Sup: <span className="font-medium text-gray-700 dark:text-gray-300">{metric.totalHectares} ha</span>
-                                        {' '} | Total Gasto: <span className="font-medium text-green-600">${Math.round(metric.spentTotal.total).toLocaleString()}</span>
+                                    <p className="text-xs text-gray-500 dark:text-blue-300">
+                                        Sup: <span className="font-medium text-gray-700 dark:text-white">{metric.totalHectares} ha</span>
+                                        {' '} | Total Gasto: <span className="font-medium text-green-600 dark:text-green-400">${Math.round(metric.spentTotal.total).toLocaleString()}</span>
                                     </p>
                                 </div>
 
                                 <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
                                     <div className="flex flex-col items-end">
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase mb-1">Costo / Presupuesto (ha)</span>
+                                        <span className="text-[10px] text-gray-400 dark:text-blue-300 font-bold uppercase mb-1">Costo / Presupuesto (ha)</span>
                                         <div className="flex items-baseline gap-1">
                                             <span className={`text-2xl font-bold ${isOver ? 'text-red-600' : 'text-gray-800 dark:text-gray-100'}`}>
                                                 ${Math.round(actualTotal)}
                                             </span>
-                                            <span className="text-sm text-gray-500">/ ${Math.round(budgetTotal)}</span>
+                                            <span className="text-sm text-gray-500 dark:text-blue-300">/ ${Math.round(budgetTotal)}</span>
                                         </div>
                                     </div>
                                     {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
@@ -166,7 +166,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({ seasonId, companyI
                                             {/* 2. DETAILED BREAKDOWN GRID */}
                                             <div>
                                                 <div className="flex items-center justify-between mb-4 mt-8 pb-2 border-b border-gray-200 dark:border-gray-700">
-                                                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                                    <h4 className="text-xs font-bold text-gray-500 dark:text-blue-300 uppercase tracking-widest">
                                                         Desglose por Categoría
                                                     </h4>
                                                 </div>

@@ -6,6 +6,8 @@ import { Modal, Button } from '../UI';
 import * as Storage from '../../services/storageService';
 import { getPlotBudgetStats } from '../../hooks/useBudgetCalculator';
 import { useMediaRecorder } from '../../hooks/useMediaRecorder';
+import { useData } from '../../contexts/DataContext';
+import { getUserRole, getRoleColorClass, getRoleBgClass } from '../../utils/roleUtils';
 
 interface LotSituationTableProps {
     plots: Plot[];
@@ -35,6 +37,7 @@ export const LotSituationTable: React.FC<LotSituationTableProps> = ({
     sortConfig,
     onSort
 }) => {
+    const { dataOwnerId } = useData();
     // --- STATE ---
     const [selectedSummary, setSelectedSummary] = useState<LotSummary | null>(null);
     const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
@@ -454,7 +457,7 @@ export const LotSituationTable: React.FC<LotSituationTableProps> = ({
                                 </div>
 
                                 {selectedSummary.notes ? (
-                                    <p className="text-sm text-gray-700 dark:text-gray-300 italic">"{selectedSummary.notes}"</p>
+                                    <p className={`text-sm italic ${getRoleColorClass(getUserRole(selectedSummary.userId, data.users, dataOwnerId))}`}>"{selectedSummary.notes}"</p>
                                 ) : <span className="text-xs text-gray-400 italic">Sin notas escritas.</span>}
 
                                 {selectedSummary.audioUrl && (
@@ -537,7 +540,7 @@ export const LotSituationTable: React.FC<LotSituationTableProps> = ({
                                         </span>
                                     </div>
                                     {selectedSummary.engineerNotes ? (
-                                        <p className="text-sm text-gray-700 dark:text-gray-300 italic mb-2">"{selectedSummary.engineerNotes}"</p>
+                                        <p className={`text-sm italic mb-2 ${getRoleColorClass('admin')}`}>"{selectedSummary.engineerNotes}"</p>
                                     ) : <span className="text-xs text-gray-400 italic block mb-2">Sin notas del ingeniero.</span>}
 
                                     {selectedSummary.engineerAudioUrl && (
@@ -579,8 +582,8 @@ export const LotSituationTable: React.FC<LotSituationTableProps> = ({
                                             <div className="flex items-center gap-2 mt-0.5">
                                                 {sample.phenology && (
                                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${sample.phenology.startsWith('V') ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:border-green-800' :
-                                                            sample.phenology.startsWith('R') ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800' :
-                                                                'bg-gray-50 text-gray-600 border-gray-200'
+                                                        sample.phenology.startsWith('R') ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800' :
+                                                            'bg-gray-50 text-gray-600 border-gray-200'
                                                         }`}>
                                                         {sample.phenology}
                                                     </span>
@@ -616,7 +619,7 @@ export const LotSituationTable: React.FC<LotSituationTableProps> = ({
                                     )}
 
                                     {sample.observations && (
-                                        <p className="text-xs text-gray-600 dark:text-gray-400 italic bg-gray-50/50 dark:bg-gray-900/20 p-2 rounded border border-gray-100 dark:border-gray-800 mb-2">
+                                        <p className={`text-xs italic bg-gray-50/50 dark:bg-gray-900/20 p-2 rounded border border-gray-100 dark:border-gray-800 mb-2 ${getRoleColorClass(getUserRole(sample.userId, data.users, dataOwnerId))}`}>
                                             "{sample.observations}"
                                         </p>
                                     )}
@@ -692,7 +695,7 @@ export const LotSituationTable: React.FC<LotSituationTableProps> = ({
                         {selectedPrescription.notes && (
                             <div>
                                 <h4 className="text-xs font-bold text-gray-500 uppercase mb-1">Indicaciones</h4>
-                                <p className="text-sm italic text-gray-600 dark:text-gray-300 p-3 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30 rounded-lg">
+                                <p className={`text-sm italic p-3 bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30 rounded-lg ${getRoleColorClass(getUserRole(selectedPrescription.ownerId, data.users, dataOwnerId))}`}>
                                     {selectedPrescription.notes}
                                 </p>
                             </div>

@@ -2,6 +2,8 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { AppState, MonitoringRecord, LotSummary, Prescription } from '../../types';
 import { X, Bug, FileText, CheckCircle2, Flag, Calendar, User, Play, Pause, Clock, AlertTriangle, Droplets, Leaf, Sprout, Tractor, History, LayoutDashboard } from 'lucide-react';
+import { useData } from '../../contexts/DataContext';
+import { getUserRole, getRoleColorClass, getRoleBgClass } from '../../utils/roleUtils';
 
 interface LotHistoryModalProps {
     plotId: string;
@@ -10,6 +12,7 @@ interface LotHistoryModalProps {
 }
 
 export const LotHistoryModal: React.FC<LotHistoryModalProps> = ({ plotId, onClose, data }) => {
+    const { dataOwnerId } = useData();
     const plot = data.plots.find(p => p.id === plotId);
     const field = data.fields.find(f => f.id === plot?.fieldId);
     const company = data.companies.find(c => c.id === plot?.companyId);
@@ -237,9 +240,13 @@ export const LotHistoryModal: React.FC<LotHistoryModalProps> = ({ plotId, onClos
                                         {/* 2. SUMMARY DETAIL */}
                                         {event.type === 'summary' && (
                                             <div className="text-sm">
-                                                {event.data.notes && <p className="text-gray-700 dark:text-gray-300 mb-2 italic">"{event.data.notes}"</p>}
+                                                {event.data.notes && (
+                                                    <p className={`${getRoleColorClass(getUserRole(event.data.userId, data.users, dataOwnerId))} mb-2 italic`}>
+                                                        "{event.data.notes}"
+                                                    </p>
+                                                )}
                                                 {event.data.engineerNotes && (
-                                                    <div className="text-xs bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-2 rounded border border-blue-100 dark:border-blue-800 mb-2">
+                                                    <div className={`text-xs ${getRoleBgClass('admin')} ${getRoleColorClass('admin')} p-2 rounded border border-blue-100 dark:border-blue-800 mb-2`}>
                                                         <b>Ingeniero:</b> {event.data.engineerNotes}
                                                     </div>
                                                 )}
@@ -270,7 +277,11 @@ export const LotHistoryModal: React.FC<LotHistoryModalProps> = ({ plotId, onClos
                                                     )}
                                                 </div>
                                                 {event.data.taskNames.length > 0 && <p className="text-xs text-gray-500 mb-1">Labores: {event.data.taskNames.join(', ')}</p>}
-                                                {event.data.notes && <p className="text-xs italic text-gray-500 dark:text-gray-400">"{event.data.notes}"</p>}
+                                                {event.data.notes && (
+                                                    <p className={`text-xs italic ${getRoleColorClass(getUserRole(event.data.ownerId, data.users, dataOwnerId))}`}>
+                                                        "{event.data.notes}"
+                                                    </p>
+                                                )}
                                                 {event.data.audioUrl && (
                                                     <button onClick={() => toggleAudio(event.data.audioUrl, `pre-${event.id}`)} className="mt-2 text-xs flex items-center bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1.5 rounded transition-colors hover:bg-gray-200 dark:hover:bg-gray-600"><Play className="w-3 h-3 mr-1" /> Escuchar Indicaciones <audio id={`history-audio-pre-${event.id}`} src={event.data.audioUrl} className="hidden" /></button>
                                                 )}
@@ -285,7 +296,7 @@ export const LotHistoryModal: React.FC<LotHistoryModalProps> = ({ plotId, onClos
                                                     <span className="font-bold">Labor Completada</span>
                                                 </div>
                                                 {event.data.observation && (
-                                                    <div className="bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded text-xs text-emerald-800 dark:text-emerald-200 border border-emerald-100 dark:border-emerald-800/50">
+                                                    <div className={`bg-emerald-50 dark:bg-emerald-900/20 p-2 rounded text-xs ${getRoleColorClass('operator')} border border-emerald-100 dark:border-emerald-800/50`}>
                                                         <span className="font-bold block mb-0.5">Observación del Cliente:</span>
                                                         "{event.data.observation}"
                                                     </div>

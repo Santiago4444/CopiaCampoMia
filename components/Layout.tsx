@@ -163,10 +163,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             onNavigate(id);
             setIsMobileMenuOpen(false);
           }}
-          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${currentView === id ? 'bg-agro-50 dark:bg-agro-900/30 text-agro-700 dark:text-agro-400 border-l-4 border-agro-600 dark:border-agro-500' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors text-left ${currentView === id ? 'bg-agro-50 dark:bg-agro-900/30 text-agro-700 dark:text-agro-400 border-l-4 border-agro-600 dark:border-agro-500' : 'text-gray-600 dark:text-blue-200 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
         >
-          <Icon className={`w-5 h-5 ${currentView === id ? 'text-agro-600 dark:text-agro-400' : 'text-gray-400 dark:text-gray-500'}`} />
+          <Icon className={`w-5 h-5 ${currentView === id ? 'text-agro-600 dark:text-agro-400' : 'text-gray-400 dark:text-blue-300'}`} />
           <span className="font-medium">{label}</span>
         </button>
       );
@@ -187,12 +187,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         {currentUser?.role === 'admin' && (
           <>
-            <div className="pt-6 pb-2 px-4"><p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Gestión</p></div>
+            <div className="pt-6 pb-2 px-4"><p className="text-xs font-semibold text-gray-400 dark:text-blue-300 uppercase tracking-wider">Gestión</p></div>
             {renderItem('manage-team', 'Equipo y Clientes', Users)}
             {renderItem('crop-assignments', 'Asignación Cultivos', LayoutList)}
             {renderItem('structure-hub', 'Empresas/Lotes', Layers)}
 
-            <div className="pt-4 pb-2 px-4"><p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Catálogos</p></div>
+            <div className="pt-4 pb-2 px-4"><p className="text-xs font-semibold text-gray-400 dark:text-blue-300 uppercase tracking-wider">Catálogos</p></div>
             {renderItem('manage-seasons', 'Campañas', Calendar)}
             {renderItem('manage-agrochemicals', 'Insumos', FlaskConical)}
             {renderItem('manage-tasks', 'Labores', ListTodo)}
@@ -215,7 +215,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <StopCircle className="w-8 h-8 text-amber-600 dark:text-amber-400" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Recorrido Pausado</h3>
-              <p className="text-gray-500 dark:text-gray-400 mb-6">
+              <p className="text-gray-500 dark:text-blue-300 mb-6">
                 Has recorrido <strong>{distanceTraveled.toFixed(2)} km</strong> en <strong>{formatTime(elapsedTime)}</strong>.<br />
                 ¿Qué deseas hacer?
               </p>
@@ -238,7 +238,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col shadow-sm z-10 hidden md:flex">
         <div className="p-6 flex items-center space-x-2 border-b border-gray-100 dark:border-gray-700">
           <div className="bg-agro-600 dark:bg-agro-500 p-2 rounded-lg"><Sprout className="w-6 h-6 text-white" /></div>
-          <div><h1 className="text-xl font-bold text-gray-800 dark:text-white tracking-tight leading-none">Ing Marcon</h1><span className="text-[10px] text-gray-400 uppercase font-semibold">Consultoría</span></div>
+          <div><h1 className="text-xl font-bold text-gray-800 dark:text-white tracking-tight leading-none">Ing Marcon</h1><span className="text-[10px] text-gray-400 dark:text-blue-300 uppercase font-semibold">Consultoría</span></div>
         </div>
         {renderNavItems()}
       </aside>
@@ -255,7 +255,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="p-4 border-t border-gray-100 dark:border-gray-700">
               <div className="flex items-center space-x-3 mb-4 px-2">
                 <div className="w-8 h-8 rounded-full bg-agro-100 dark:bg-agro-900/50 flex items-center justify-center text-agro-700 dark:text-agro-400 font-bold">{currentUser.name.charAt(0)}</div>
-                <div className="flex flex-col"><span className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate w-32">{currentUser.name}</span><span className="text-[10px] text-gray-500 dark:text-gray-400 capitalize">{currentUser.role}</span></div>
+                <div className="flex flex-col"><span className="text-sm font-semibold text-gray-700 dark:text-gray-300 truncate w-32">{currentUser.name}</span><span className="text-[10px] text-gray-500 dark:text-blue-300 capitalize">{currentUser.role}</span></div>
               </div>
               <button onClick={logout} className="w-full flex items-center justify-center px-4 py-2 border border-red-200 dark:border-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-sm font-medium"><LogOut className="w-4 h-4 mr-2" /> Cerrar Sesión</button>
             </div>
@@ -267,7 +267,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <header className="h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 md:px-8 shadow-sm shrink-0">
           <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
             <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 -ml-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Menu className="w-6 h-6" /></button>
-            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200 truncate">{headerTitle}</h2>
+            <h2 className="text-lg font-semibold text-gray-700 dark:text-blue-100 truncate">{headerTitle}</h2>
           </div>
 
           <div className="flex items-center space-x-2 md:space-x-4 shrink-0">
@@ -321,7 +321,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </div>
                 )}
                 {!isOnline && pendingCount === 0 && (
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Modo offline</span>
+                  <span className="text-xs font-medium text-gray-600 dark:text-blue-300">Modo offline</span>
                 )}
               </button>
 
@@ -335,13 +335,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     ) : (
                       <AlertCircle className="w-4 h-4 text-orange-500" />
                     )}
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <span className="text-sm font-medium text-gray-700 dark:text-blue-200">
                       {isOnline ? 'Conexión establecida' : 'Modo offline activo'}
                     </span>
                   </div>
 
                   {/* Información de sincronización */}
-                  <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+                  <div className="space-y-2 text-xs text-gray-600 dark:text-blue-300 mb-3">
                     <div className="flex justify-between">
                       <span>Operaciones pendientes:</span>
                       <span className="font-medium text-gray-800 dark:text-white">{pendingCount}</span>
@@ -382,10 +382,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               )}
             </div>
 
-            <button onClick={toggleTheme} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">{isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
+            <button onClick={toggleTheme} className="p-2 rounded-full text-gray-500 dark:text-blue-300 hover:bg-gray-100 dark:hover:bg-gray-700">{isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}</button>
             <div className="hidden md:flex items-center space-x-3 border-l pl-6 border-gray-200 dark:border-gray-700">
-              <div className="flex flex-col items-end mr-1"><span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{currentUser.name}</span><span className="text-xs text-gray-500 dark:text-gray-400 capitalize">{currentUser.role}</span></div>
-              <button onClick={logout} className="p-2 text-gray-500 hover:text-red-500 dark:text-gray-400 transition-colors"><LogOut className="w-5 h-5" /></button>
+              <div className="flex flex-col items-end mr-1"><span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{currentUser.name}</span><span className="text-xs text-gray-500 dark:text-blue-300 capitalize">{currentUser.role}</span></div>
+              <button onClick={logout} className="p-2 text-gray-500 hover:text-red-500 dark:text-blue-300 transition-colors"><LogOut className="w-5 h-5" /></button>
             </div>
           </div>
         </header>

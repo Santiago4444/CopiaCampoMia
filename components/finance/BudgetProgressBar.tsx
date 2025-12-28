@@ -20,7 +20,7 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({ label, val
     return (
         <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col justify-between h-full">
             <div className="flex justify-between items-end mb-2">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wide truncate">{label}</h4>
+                <h4 className="text-xs font-bold text-gray-500 dark:text-blue-300 uppercase tracking-wide truncate">{label}</h4>
                 <div className={`text-xs font-bold ${isOverBudget ? 'text-red-500' : 'text-gray-700 dark:text-gray-300'}`}>
                     {Math.round(percentage)}%
                 </div>
@@ -34,10 +34,10 @@ export const BudgetProgressBar: React.FC<BudgetProgressBarProps> = ({ label, val
             </div>
 
             <div className="flex justify-between items-center text-xs">
-                <span className="font-semibold text-gray-700 dark:text-gray-200">
+                <span className="font-semibold text-gray-700 dark:text-gray-100">
                     ${Math.round(value).toLocaleString()}
                 </span>
-                <span className="text-gray-400">
+                <span className="text-gray-400 dark:text-blue-300">
                     / ${Math.round(budget).toLocaleString()}
                 </span>
             </div>

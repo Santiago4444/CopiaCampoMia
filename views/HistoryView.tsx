@@ -97,7 +97,9 @@ export const HistoryView: React.FC = () => {
                 usersMap.set(m.userId, m.userName);
             }
         });
-        return Array.from(usersMap.entries()).map(([id, name]) => ({ value: id, label: name }));
+        return Array.from(usersMap.entries())
+            .map(([id, name]) => ({ value: id, label: name }))
+            .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' }));
     }, [data.monitorings]);
 
     const filteredHistoryBase = useMemo(() => {
@@ -302,9 +304,9 @@ export const HistoryView: React.FC = () => {
                     <div className="flex-1"><label className="block text-[10px] font-bold text-gray-400 uppercase ml-1 mb-0.5">Hasta</label><input type="date" className="w-full px-2 py-1.5 rounded text-xs border bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200" value={historyFilter.dateTo} onChange={(e) => setHistoryFilter({ ...historyFilter, dateTo: e.target.value })} /></div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                    <Select label="" options={userCompanies.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))} value={historyFilter.companyId} onChange={(e) => setHistoryFilter({ ...historyFilter, companyId: e.target.value, fieldId: '', plotId: '' })} placeholder="Todas las empresas" className="py-1 text-xs" />
-                    <Select label="" options={historyFields.sort((a, b) => a.name.localeCompare(b.name)).map(f => ({ value: f.id, label: f.name }))} value={historyFilter.fieldId} onChange={(e) => setHistoryFilter({ ...historyFilter, fieldId: e.target.value, plotId: '' })} disabled={!historyFilter.companyId} placeholder="Todos los campos" className="py-1 text-xs" />
-                    <Select label="" options={historyPlots.sort((a, b) => a.name.localeCompare(b.name)).map(p => ({ value: p.id, label: p.name }))} value={historyFilter.plotId} onChange={(e) => setHistoryFilter({ ...historyFilter, plotId: e.target.value })} disabled={!historyFilter.fieldId} placeholder="Todos los lotes" className="py-1 text-xs" />
+                    <Select label="" options={userCompanies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={historyFilter.companyId} onChange={(e) => setHistoryFilter({ ...historyFilter, companyId: e.target.value, fieldId: '', plotId: '' })} placeholder="Todas las empresas" className="py-1 text-xs" />
+                    <Select label="" options={historyFields.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={historyFilter.fieldId} onChange={(e) => setHistoryFilter({ ...historyFilter, fieldId: e.target.value, plotId: '' })} disabled={!historyFilter.companyId} placeholder="Todos los campos" className="py-1 text-xs" />
+                    <Select label="" options={historyPlots.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(p => ({ value: p.id, label: p.name }))} value={historyFilter.plotId} onChange={(e) => setHistoryFilter({ ...historyFilter, plotId: e.target.value })} disabled={!historyFilter.fieldId} placeholder="Todos los lotes" className="py-1 text-xs" />
                     <Select label="" options={historyUsers} value={historyFilter.userId} onChange={(e) => setHistoryFilter({ ...historyFilter, userId: e.target.value })} placeholder="Todos los usuarios" className="py-1 text-xs" />
                 </div>
             </div>
@@ -336,8 +338,8 @@ export const HistoryView: React.FC = () => {
                                 {m.phenology && (
                                     <div className="flex items-center text-xs">
                                         <span className={`px-2 py-0.5 rounded font-bold border ${m.phenology.startsWith('V') ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:border-green-800' :
-                                                m.phenology.startsWith('R') ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800' :
-                                                    'bg-gray-50 text-gray-600 border-gray-200'
+                                            m.phenology.startsWith('R') ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:border-amber-800' :
+                                                'bg-gray-50 text-gray-600 border-gray-200'
                                             }`}>
                                             {m.phenology}
                                         </span>

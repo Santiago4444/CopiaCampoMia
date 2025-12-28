@@ -218,7 +218,7 @@ export const PlotMapModal: React.FC<PlotMapModalProps> = ({ isOpen, onClose, plo
                         <Select
                             label=""
                             placeholder="Todas las Empresas..."
-                            options={companies.map(c => ({ value: c.id, label: c.name }))}
+                            options={companies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))}
                             value={filterCompanyId}
                             onChange={(e) => { setFilterCompanyId(e.target.value); setFilterFieldId(''); }}
                             className="w-full"
@@ -228,7 +228,7 @@ export const PlotMapModal: React.FC<PlotMapModalProps> = ({ isOpen, onClose, plo
                         <Select
                             label=""
                             placeholder="Todos los Campos..."
-                            options={availableFields.map(f => ({ value: f.id, label: f.name }))}
+                            options={availableFields.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))}
                             value={filterFieldId}
                             onChange={(e) => setFilterFieldId(e.target.value)}
                             disabled={!filterCompanyId}

@@ -21,7 +21,7 @@ export const SeasonManager: React.FC<SeasonManagerProps> = ({ seasons }) => {
 
   const filteredItems = seasons
     .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
   const openAdd = () => {
     setEditingItem(null);
@@ -36,20 +36,20 @@ export const SeasonManager: React.FC<SeasonManagerProps> = ({ seasons }) => {
   };
 
   const handleDeleteClick = (id: string) => {
-      setDeleteId(id);
+    setDeleteId(id);
   };
 
   const confirmDelete = async () => {
-      if (deleteId) {
-          await Storage.deleteSeason(deleteId);
-          setDeleteId(null);
-      }
+    if (deleteId) {
+      await Storage.deleteSeason(deleteId);
+      setDeleteId(null);
+    }
   };
 
   const handleActivate = async (id: string) => {
-      if (dataOwnerId) {
-          await Storage.setActiveSeason(id, dataOwnerId);
-      }
+    if (dataOwnerId) {
+      await Storage.setActiveSeason(id, dataOwnerId);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,9 +76,9 @@ export const SeasonManager: React.FC<SeasonManagerProps> = ({ seasons }) => {
 
       <div className="px-6 py-4 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
         <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input type="text" placeholder="Buscar campaña..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-agro-500 outline-none transition-all text-sm dark:text-gray-200" />
-            {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>}
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input type="text" placeholder="Buscar campaña..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-10 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-agro-500 outline-none transition-all text-sm dark:text-gray-200" />
+          {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>}
         </div>
       </div>
 
@@ -111,15 +111,15 @@ export const SeasonManager: React.FC<SeasonManagerProps> = ({ seasons }) => {
 
       {/* Delete Confirmation Modal */}
       <Modal isOpen={!!deleteId} onClose={() => setDeleteId(null)} title="Eliminar Campaña">
-          <div className="space-y-4">
-              <p className="text-gray-700 dark:text-gray-300">
-                  ¿Estás seguro de eliminar esta campaña?
-              </p>
-              <div className="flex justify-end gap-2">
-                  <Button variant="ghost" onClick={() => setDeleteId(null)}>Cancelar</Button>
-                  <Button variant="danger" onClick={confirmDelete}>Eliminar</Button>
-              </div>
+        <div className="space-y-4">
+          <p className="text-gray-700 dark:text-gray-300">
+            ¿Estás seguro de eliminar esta campaña?
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" onClick={() => setDeleteId(null)}>Cancelar</Button>
+            <Button variant="danger" onClick={confirmDelete}>Eliminar</Button>
           </div>
+        </div>
       </Modal>
     </div>
   );

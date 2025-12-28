@@ -12,6 +12,10 @@ import {
 import * as Storage from '../../services/storageService';
 import { PrescriptionItem, Prescription } from '../../types';
 
+// Sort helper to avoid repetition
+const sortByName = (a: { name: string }, b: { name: string }) =>
+    a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+
 // Internal type for a "Batch" during the tour
 interface PrescriptionBatch {
     id: string;
@@ -202,13 +206,13 @@ export const TourMode: React.FC<TourModeProps> = ({ onCancel, onFinish }) => {
                 <div className="space-y-4">
                     <Select
                         label="Empresa"
-                        options={userCompanies.map(c => ({ value: c.id, label: c.name }))}
+                        options={userCompanies.sort(sortByName).map(c => ({ value: c.id, label: c.name }))}
                         value={selectedCompanyId}
                         onChange={(e) => { setSelectedCompanyId(e.target.value); setSelectedFieldId(''); }}
                     />
                     <Select
                         label="Campo"
-                        options={availableFields.map(f => ({ value: f.id, label: f.name }))}
+                        options={availableFields.sort(sortByName).map(f => ({ value: f.id, label: f.name }))}
                         value={selectedFieldId}
                         onChange={(e) => setSelectedFieldId(e.target.value)}
                         disabled={!selectedCompanyId}
@@ -322,7 +326,7 @@ export const TourMode: React.FC<TourModeProps> = ({ onCancel, onFinish }) => {
                     </h3>
                     <MultiSelect
                         label="Seleccionar Lotes"
-                        options={availablePlots.map(p => ({ value: p.id, label: `${p.name} (${p.hectares} ha)` }))}
+                        options={availablePlots.sort(sortByName).map(p => ({ value: p.id, label: `${p.name} (${p.hectares} ha)` }))}
                         selectedValues={selectedPlotIds}
                         onChange={setSelectedPlotIds}
                     />
@@ -385,7 +389,7 @@ export const TourMode: React.FC<TourModeProps> = ({ onCancel, onFinish }) => {
                         <div className="flex-1">
                             <Select
                                 label="Insumo"
-                                options={safeAgrochemicals.map(a => ({ value: a.id, label: a.name }))}
+                                options={safeAgrochemicals.sort(sortByName).map(a => ({ value: a.id, label: a.name }))}
                                 value={currentItemId}
                                 onChange={(e) => {
                                     const id = e.target.value;
@@ -420,7 +424,7 @@ export const TourMode: React.FC<TourModeProps> = ({ onCancel, onFinish }) => {
                     <div className="mb-4">
                         <MultiSelect
                             label="Labores / Tareas"
-                            options={safeTasks.map(t => ({ value: t.id, label: t.name }))}
+                            options={safeTasks.sort(sortByName).map(t => ({ value: t.id, label: t.name }))}
                             selectedValues={selectedTaskIds}
                             onChange={setSelectedTaskIds}
                         />

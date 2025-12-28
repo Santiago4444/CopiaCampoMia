@@ -66,8 +66,8 @@ const PhenologySelector: React.FC<{
                 <div className="flex items-center gap-2">
                     {value && (
                         <span className={`text-xs font-bold px-2 py-0.5 rounded shadow-sm border ${type === 'R' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800' :
-                                type === 'V' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800' :
-                                    'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
+                            type === 'V' ? 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-800' :
+                                'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600'
                             }`}>
                             {value}
                         </span>
@@ -250,10 +250,10 @@ export const HomeView: React.FC = () => {
             {/* CONTEXTO */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-3">
                 <div className="grid grid-cols-2 gap-2">
-                    <Select label="" placeholder="Empresa..." options={userCompanies.sort((a, b) => a.name.localeCompare(b.name)).map(c => ({ value: c.id, label: c.name }))} value={selection.companyId || ''} onChange={(e) => setSelection({ companyId: e.target.value, fieldId: null, plotId: null, seasonId: selection.seasonId })} className="py-1.5 text-sm" />
-                    <Select label="" placeholder="Campo..." options={availableFields.sort((a, b) => a.name.localeCompare(b.name)).map(f => ({ value: f.id, label: f.name }))} value={selection.fieldId || ''} onChange={(e) => setSelection({ ...selection, fieldId: e.target.value, plotId: null })} disabled={!selection.companyId} className="py-1.5 text-sm" />
-                    <Select label="" placeholder="Lote..." options={availablePlots.sort((a, b) => a.name.localeCompare(b.name)).map(p => ({ value: p.id, label: p.name }))} value={selection.plotId || ''} onChange={(e) => setSelection({ ...selection, plotId: e.target.value })} disabled={!selection.fieldId} className="py-1.5 text-sm" />
-                    <Select label="" placeholder="Campaña..." options={data.seasons.sort((a, b) => a.name.localeCompare(b.name)).map(s => ({ value: s.id, label: s.name }))} value={selection.seasonId || ''} onChange={(e) => setSelection({ ...selection, seasonId: e.target.value })} className="py-1.5 text-sm" />
+                    <Select label="" placeholder="Empresa..." options={userCompanies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={selection.companyId || ''} onChange={(e) => setSelection({ companyId: e.target.value, fieldId: null, plotId: null, seasonId: selection.seasonId })} className="py-1.5 text-sm" />
+                    <Select label="" placeholder="Campo..." options={availableFields.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={selection.fieldId || ''} onChange={(e) => setSelection({ ...selection, fieldId: e.target.value, plotId: null })} disabled={!selection.companyId} className="py-1.5 text-sm" />
+                    <Select label="" placeholder="Lote..." options={availablePlots.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(p => ({ value: p.id, label: p.name }))} value={selection.plotId || ''} onChange={(e) => setSelection({ ...selection, plotId: e.target.value })} disabled={!selection.fieldId} className="py-1.5 text-sm" />
+                    <Select label="" placeholder="Campaña..." options={data.seasons.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(s => ({ value: s.id, label: s.name }))} value={selection.seasonId || ''} onChange={(e) => setSelection({ ...selection, seasonId: e.target.value })} className="py-1.5 text-sm" />
                 </div>
             </div>
 
@@ -348,7 +348,7 @@ export const HomeView: React.FC = () => {
                         </div>
 
                         {/* FORM CONTROLS */}
-                        <div><MultiSelect label="Plagas Detectadas" options={data.pests.sort((a, b) => a.name.localeCompare(b.name)).map(p => ({ value: p.id, label: p.name }))} selectedValues={form.selectedPestIds} onChange={form.handlePestChange} placeholder="Seleccionar plagas..." /></div>
+                        <div><MultiSelect label="Plagas Detectadas" options={data.pests.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(p => ({ value: p.id, label: p.name }))} selectedValues={form.selectedPestIds} onChange={form.handlePestChange} placeholder="Seleccionar plagas..." /></div>
 
                         {form.selectedPestIds.length > 0 && (
                             <div className="space-y-2 border-t border-b border-gray-100 dark:border-gray-700 py-3">
