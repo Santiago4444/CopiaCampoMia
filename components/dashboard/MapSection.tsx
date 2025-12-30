@@ -14,13 +14,14 @@ interface MapSectionProps {
     crops?: Crop[];
     seasonId?: string;
     isVisible?: boolean;
-    mapColorMode?: 'date' | 'status' | 'pest' | 'track';
+    mapColorMode?: 'date' | 'status' | 'pest';
     selectedPestForMap?: string;
     summaries?: LotSummary[];
     isExporting?: boolean;
     onSelectSummary?: (summary: LotSummary) => void;
     showHistory?: boolean;
     tracks?: TrackSession[];
+    showTracks?: boolean; // New prop for overlay
     onOpenHistory?: (plotId: string) => void;
 }
 
@@ -43,7 +44,7 @@ interface NumericRange {
 export const MapSection = forwardRef<HTMLDivElement, MapSectionProps>(({
     monitorings,
     plots,
-    fields = [], // New
+    fields = [],
     isVisible = true,
     mapColorMode = 'date',
     selectedPestForMap = '',
@@ -55,9 +56,13 @@ export const MapSection = forwardRef<HTMLDivElement, MapSectionProps>(({
     crops = [],
     seasonId = '',
     tracks = [],
+    showTracks = false,
     onOpenHistory
 }, ref) => {
     const { data } = useData();
+    // Use consistent violet for tracks to match legend (and avoid confusion with Status Red/Green)
+    const TRACK_COLOR = '#8b5cf6';
+    const STOP_COLOR = '#f97316';
     const mapDivRef = useRef<HTMLDivElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<any>(null);
@@ -500,31 +505,35 @@ export const MapSection = forwardRef<HTMLDivElement, MapSectionProps>(({
             if (isExporting) map.setView([-34.6037, -58.3816], 5, { animate: false });
         }
 
-        // --- TRACKS RENDERING ---
-        if (tracks.length > 0) {
-            const trackMarkers: any[] = [];
-
-            // Color palette for days
-            const TRACK_COLORS = ['#3b82f6', '#8b5cf6', '#ef4444', '#f59e0b', '#10b981', '#ec4899', '#6366f1'];
-
-            // Group tracks by date to assign colors
-            const uniqueDates = Array.from(new Set(tracks.map(t => new Date(t.startTime).toLocaleDateString()))).sort();
-
+        // --- TRACKS RENDERING (OVERLAY) ---
+        // Render tracks if explicitly enabled, regardless of mode (usually Status mode)
+        if (showTracks && tracks.length > 0) {
             tracks.forEach(track => {
                 if (!track.points || track.points.length === 0) return;
-
-                const trackDate = new Date(track.startTime).toLocaleDateString();
-                const colorIndex = uniqueDates.indexOf(trackDate) % TRACK_COLORS.length;
-                const trackColor = TRACK_COLORS[colorIndex];
 
                 // 1. Draw Polyline
                 const latlngs = track.points.map(p => [p.lat, p.lng] as [number, number]);
                 const polyline = L.polyline(latlngs, {
-                    color: trackColor,
-                    weight: 5,
+                    color: TRACK_COLOR,
+                    weight: 4,
                     opacity: 0.8,
-                    lineJoin: 'round'
+                    lineJoin: 'round',
+                    dashArray: '8, 8'
                 }).addTo(map);
+
+                // Tooltip
+                const labelContent = `
+                    <div class="text-xs font-bold text-center">
+                        <div>${track.userName || 'Usuario'}</div>
+                        <div class="text-[10px] font-normal">${getShortDate(track.startTime)} ${new Date(track.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                `;
+
+                polyline.bindTooltip(labelContent, {
+                    sticky: true,
+                    direction: 'top',
+                    className: '!bg-white/90 !backdrop-blur !border !border-gray-300 !px-2 !py-1 !rounded !shadow-sm'
+                });
 
                 polyline.bindPopup(`
                     <div class="text-xs">
@@ -535,69 +544,78 @@ export const MapSection = forwardRef<HTMLDivElement, MapSectionProps>(({
                     </div>
                 `);
 
-                trackMarkers.push(polyline); // Add to local array for bounds calculation
-
-                // Add start/end markers
+                // 2. Start & End Markers (Enhanced)
                 const startPoint = latlngs[0];
                 const endPoint = latlngs[latlngs.length - 1];
 
-                L.circleMarker(startPoint, { radius: 4, color: '#10b981', fillOpacity: 1 }).addTo(map);
-                L.circleMarker(endPoint, { radius: 4, color: '#ef4444', fillOpacity: 1 }).addTo(map);
+                // Start: Green Play Icon look
+                const startIcon = L.divIcon({
+                    className: 'custom-start-icon',
+                    html: `<div style="background-color: #10b981; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                });
+                L.marker(startPoint, { icon: startIcon, zIndexOffset: 1000 }).addTo(map).bindTooltip("Inicio", { direction: 'top', offset: [0, -6] });
 
-                // 2. Stop Detection Algorithm (> 1 min in 30m radius)
-                const STOPS_THRESHOLD_KM = 0.03; // 30 meters
-                const STOP_MIN_MINUTES = 1;
+                // End: Red Flag/Square look
+                const endIcon = L.divIcon({
+                    className: 'custom-end-icon',
+                    html: `<div style="background-color: #ef4444; width: 12px; height: 12px; border-radius: 2px; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                });
+                L.marker(endPoint, { icon: endIcon, zIndexOffset: 1000 }).addTo(map).bindTooltip("Fin", { direction: 'top', offset: [0, -6] });
 
-                let groupStartIdx = 0;
+                // 3. Stop Detection Logic
+                if (track.points.length > 2) {
+                    const STOP_RADIUS_KM = 0.03; // 30 meters
+                    const MIN_STOP_MINUTES = 1;
 
-                for (let i = 1; i < track.points.length; i++) {
-                    const pStart = track.points[groupStartIdx];
-                    const pCurr = track.points[i];
+                    let anchorIdx = 0;
 
-                    const dist = calculateDistance(pStart.lat, pStart.lng, pCurr.lat, pCurr.lng);
+                    for (let i = 1; i < track.points.length; i++) {
+                        const anchor = track.points[anchorIdx];
+                        const current = track.points[i];
 
-                    if (dist > STOPS_THRESHOLD_KM) {
-                        // Check duration of previous group
-                        const startTime = track.points[groupStartIdx].timestamp;
-                        const endTime = track.points[i - 1].timestamp;
-                        const durationMins = (endTime - startTime) / 1000 / 60;
+                        const dist = calculateDistance(anchor.lat, anchor.lng, current.lat, current.lng);
 
-                        if (durationMins >= STOP_MIN_MINUTES) {
-                            // Add STOP Marker
-                            const markerHtml = `
-                                <div style="background-color: #ef4444; color: white; border-radius: 4px; padding: 2px 4px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); white-space: nowrap;">
-                                    ${Math.round(durationMins)}m
-                                </div>
-                            `;
-                            const customIcon = L.divIcon({
-                                className: 'custom-stop-marker',
-                                html: markerHtml,
-                                iconSize: [40, 20],
-                                iconAnchor: [20, 25] // Offset above
-                            });
+                        if (dist > STOP_RADIUS_KM) {
+                            // Movement detected, check if previous segment was a stop
+                            const startTime = new Date(anchor.timestamp).getTime();
+                            const endTime = new Date(track.points[i - 1].timestamp).getTime(); // Time at last point INSIDE radius
+                            const durationMins = (endTime - startTime) / (1000 * 60);
 
-                            const stopMarker = L.marker([pStart.lat, pStart.lng], { icon: customIcon, zIndexOffset: 1000 })
-                                .addTo(map)
-                                .bindPopup(`<b>Parada: ${Math.round(durationMins)} min</b><br/>Hora: ${new Date(startTime).toLocaleTimeString()}`);
+                            if (durationMins >= MIN_STOP_MINUTES) {
+                                // It was a stop!
+                                const stopLabel = `${Math.floor(durationMins)}m`;
+                                const stopHtml = `
+                                    <div style="background-color: ${STOP_COLOR}; color: white; padding: 1px 4px; border-radius: 4px; font-size: 9px; font-weight: bold; border: 1px solid white; box-shadow: 0 1px 2px rgba(0,0,0,0.2); white-space: nowrap;">
+                                        ${stopLabel}
+                                    </div>
+                                 `;
+                                const stopIcon = L.divIcon({
+                                    className: 'stop-label',
+                                    html: stopHtml,
+                                    iconSize: [30, 16],
+                                    iconAnchor: [15, 20] // Offset a bit up
+                                });
 
-                            trackMarkers.push(stopMarker);
+                                L.marker([anchor.lat, anchor.lng], { icon: stopIcon, zIndexOffset: 900 }).addTo(map)
+                                    .bindPopup(`<b>Parada Detectada</b><br/>Duración: ${durationMins.toFixed(1)} min<br/>Hora: ${new Date(anchor.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+                            }
+
+                            // Reset anchor
+                            anchorIdx = i;
                         }
-                        groupStartIdx = i;
                     }
                 }
             });
 
-            // Auto-zoom to tracks if they exist
-            if (trackMarkers.length > 0) {
-                const group = L.featureGroup(trackMarkers);
-                const bounds = group.getBounds();
-                if (bounds.isValid()) {
-                    map.fitBounds(bounds, { padding: [50, 50] });
-                }
-            }
+            // NOTE: We do NOT fit bounds to tracks here to avoid disrupting the plot view.
+            // Tracks are an overlay.
         }
 
-    }, [monitorings, plots, mapColorMode, summaries, isExporting, selectedPestForMap, pestAnalytics, activeFilter, mapType, onSelectSummary, showHistory, isMaximized, tracks]);
+    }, [monitorings, plots, mapColorMode, summaries, isExporting, selectedPestForMap, pestAnalytics, activeFilter, mapType, onSelectSummary, showHistory, isMaximized, tracks, showTracks]);
 
     useEffect(() => {
         return () => {
@@ -679,14 +697,15 @@ export const MapSection = forwardRef<HTMLDivElement, MapSectionProps>(({
                         <div className="text-xs text-gray-500 italic">Puntos por fecha</div>
                     </>
                 )}
-                {mapColorMode === 'track' && (
+                {showTracks && (
                     <>
-                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-1">Recorrido</h4>
+                        <div className="h-px bg-gray-200 dark:bg-gray-700 my-2" />
+                        <h4 className="text-[10px] font-bold uppercase text-gray-500 mb-1">Recorridos</h4>
                         <div className="flex flex-col gap-1">
-                            <LegendItem label="Trayecto" color="#8b5cf6" />
-                            <div className="flex items-center text-xs text-gray-700 dark:text-gray-300">
-                                <span className="w-10 h-4 bg-red-500 text-white text-[9px] font-bold flex items-center justify-center rounded mr-2">STOP</span>
-                                Parada (+1min)
+                            <LegendItem label="Recorrido (7d)" color="#8b5cf6" />
+                            <div className="flex items-center text-xs text-gray-700 dark:text-gray-300 mt-1">
+                                <span className="px-1 py-0.5 bg-orange-500 text-white rounded text-[9px] font-bold mr-1.5 shadow-sm">15m</span>
+                                Parada (&gt;1min)
                             </div>
                         </div>
                     </>

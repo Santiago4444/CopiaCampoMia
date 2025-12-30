@@ -7,6 +7,7 @@ import { useOfflinePrescriptions } from '../hooks/useOfflineMedia';
 import { Select, Button, MultiSelect, Input, Modal } from '../components/UI';
 import { Plus, Trash2, FileText, Save, Mic, StopCircle, List, History, Play, Pause, Calendar, MapPin, ChevronDown, ChevronUp, Search, FlaskConical, Download, AlertTriangle, Square, CheckSquare, FileDown, CheckCircle2, X, Edit, Share2, Split, Copy, PlusCircle, DollarSign, TrendingUp, Wallet, ArrowRight, Info, Sprout, ShoppingCart, ClipboardCheck, LayoutList } from 'lucide-react';
 import * as Storage from '../services/storageService';
+import * as Export from '../services/exportService';
 import { PrescriptionItem, Prescription, PrescriptionTemplate } from '../types';
 import { jsPDF } from 'jspdf';
 import { WeatherWidget } from '../components/weather/WeatherWidget';
@@ -381,16 +382,11 @@ export const RecipesView: React.FC = () => {
             const dateStr = new Date().toISOString().split('T')[0];
             const fileName = `Recetas_IngMarcon_${dateStr}.pdf`;
 
-            // Manual save to ensure filename consistency
+            // Use centralized robust download
             const blob = doc.output('blob');
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a); // Append to body to ensure click works
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            // Explicitly pass intent to download
+
+            Export.downloadBlob(blob, fileName);
 
             showNotification("PDF Descargado exitosamente", "success");
             setShowExportOptions(false);
@@ -451,12 +447,7 @@ export const RecipesView: React.FC = () => {
                 console.warn('⚠️ Web Share API no disponible o no soporta archivos');
 
                 // Auto-download the PDF
-                const url = URL.createObjectURL(fileToShare);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileToShare.name;
-                a.click();
-                URL.revokeObjectURL(url);
+                Export.downloadBlob(fileToShare, fileToShare.name);
 
                 // Detect if Firefox (offer helpful shortcuts)
                 const isFirefox = navigator.userAgent.includes('Firefox');
@@ -483,13 +474,9 @@ export const RecipesView: React.FC = () => {
             console.error("Share error:", error);
 
             if (error.name !== 'AbortError') { // Don't notify on user cancel
-                // Fallback: Force download
-                const url = URL.createObjectURL(fileToShare);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = fileToShare.name;
-                a.click();
-                URL.revokeObjectURL(url);
+                // Fallback: Robust Download
+                console.warn('Share failed, falling back to download');
+                Export.downloadBlob(fileToShare, fileToShare.name);
                 showNotification("Se descargó el PDF. Adjúntelo manualmente en WhatsApp o Email.", "warning");
             }
             setShowExportOptions(false);

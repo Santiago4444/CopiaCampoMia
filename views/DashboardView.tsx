@@ -52,7 +52,8 @@ export const DashboardView: React.FC = () => {
 
     const [visualMode, setVisualMode] = useState<'list' | 'map' | 'charts'>('list');
 
-    const [mapColorMode, setMapColorMode] = useState<'date' | 'status' | 'pest' | 'track'>('date');
+    const [mapColorMode, setMapColorMode] = useState<'date' | 'status' | 'pest'>('date');
+    const [showTracksOverlay, setShowTracksOverlay] = useState(false);
     const [showMapHistory, setShowMapHistory] = useState(false);
     const [selectedMapPest, setSelectedMapPest] = useState<string>('');
     const [selectedTrackUser, setSelectedTrackUser] = useState<string>('');
@@ -278,11 +279,13 @@ export const DashboardView: React.FC = () => {
 
     // Default select first user if tracks exist and no user selected
     // Default select ALL if tracks exist and no user selected
+    // Default select first user if tracks exist and no user selected
+    // Default select ALL if tracks exist and no user selected
     useEffect(() => {
-        if (mapColorMode === 'track' && !selectedTrackUser) {
+        if (showTracksOverlay && !selectedTrackUser) {
             setSelectedTrackUser('all');
         }
-    }, [mapColorMode, selectedTrackUser]);
+    }, [showTracksOverlay, selectedTrackUser]);
 
 
     // FILTER SUMMARIES (For KPIs and Export)
@@ -829,7 +832,9 @@ export const DashboardView: React.FC = () => {
             const fileName = `Informe_${companyName.replace(/\s/g, '_')}_${dateStr.replace(/\//g, '-')}.pdf`;
 
             if (action === 'download') {
-                doc.save(fileName);
+                // Use robust download instead of doc.save()
+                const pdfBlob = doc.output('blob');
+                Export.downloadBlob(pdfBlob, fileName);
                 showNotification("PDF Descargado", "success");
             } else {
                 // STEP 1 of 2: Generate and Prepare File, but DO NOT SHARE yet (to avoid gesture error)
@@ -859,7 +864,9 @@ export const DashboardView: React.FC = () => {
                     text: 'Adjunto el informe de situación.',
                 });
             } else {
-                showNotification("Tu dispositivo no soporta compartir este archivo.", "warning");
+                console.warn('Share not supported, falling back to download');
+                Export.downloadBlob(fileToShare, fileToShare.name);
+                showNotification("Se descargó el PDF (Compartir no soportado)", "warning");
             }
         } catch (e) {
             console.log("Share cancelled or failed", e);
@@ -936,28 +943,21 @@ export const DashboardView: React.FC = () => {
                             <button onClick={() => setMapColorMode('pest')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center justify-center ${mapColorMode === 'pest' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}>
                                 <Bug className="w-3 h-3 mr-1.5" /> Plaga
                             </button>
-                            <button onClick={() => setMapColorMode('track')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center justify-center ${mapColorMode === 'track' ? 'bg-white text-gray-800 shadow-sm' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'}`}>
-                                <History className="w-3 h-3 mr-1.5" /> Recorrido
-                            </button>
                         </div>
+
+                        {/* TRACKS TOGGLE (Only in Status Mode) */}
+                        {mapColorMode === 'status' && (
+                            <button
+                                onClick={() => setShowTracksOverlay(!showTracksOverlay)}
+                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center justify-center border ${showTracksOverlay ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' : 'bg-white dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-700 hover:bg-gray-50'}`}
+                            >
+                                <History className="w-3 h-3 mr-1.5" /> {showTracksOverlay ? 'Ocultar Recorridos' : 'Mostrar Recorridos'}
+                            </button>
+                        )}
+
                         {mapColorMode === 'pest' && (
                             <div className="w-full md:w-48">
                                 <Select label="" options={availablePestsForMap.map(p => ({ value: p, label: p }))} value={selectedMapPest} onChange={(e) => setSelectedMapPest(e.target.value)} placeholder="Seleccionar plaga..." className="text-xs h-9 py-1" />
-                            </div>
-                        )}
-                        {mapColorMode === 'track' && (
-                            <div className="w-full md:w-48">
-                                <Select
-                                    label=""
-                                    options={[
-                                        { value: 'all', label: 'Todos los usuarios' },
-                                        ...availableTrackUsers.map(u => ({ value: u, label: u }))
-                                    ]}
-                                    value={selectedTrackUser}
-                                    onChange={(e) => setSelectedTrackUser(e.target.value)}
-                                    placeholder="Usuario..."
-                                    className="text-xs h-9 py-1"
-                                />
                             </div>
                         )}
                     </div>
@@ -1036,9 +1036,10 @@ export const DashboardView: React.FC = () => {
                     crops={data.crops}
                     seasonId={selectedSeasonId}
                     isExporting={isExporting}
-                    // onSelectSummary={setSelectedSummary} // Disable auto select for now during map view?
+                    onSelectSummary={setSelectedSummary}
                     showHistory={showMapHistory}
                     tracks={filteredTracksForMap}
+                    showTracks={showTracksOverlay}
                     onOpenHistory={(pid) => {
                         setHistoryPlotId(pid);
                     }}
