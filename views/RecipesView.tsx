@@ -996,20 +996,19 @@ export const RecipesView: React.FC = () => {
                                             <th className="px-4 py-2 w-10"></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                        {items.map((item, idx) => {
-                                            return (
-                                                <tr key={idx} className="bg-white dark:bg-gray-800">
-                                                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-white">{item.supplyName}</td>
-                                                    <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{item.dose} {item.unit}</td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        <button onClick={() => handleRemoveItem(idx)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20">
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
+                                    <tbody className="divide-y divide-gray-100 dark:divide-gray-700">{(items as PrescriptionItem[]).map((item, idx) => {
+                                        return (
+                                            <tr key={idx} className="bg-white dark:bg-gray-800">
+                                                <td className="px-4 py-3 font-medium text-gray-800 dark:text-white">{item.supplyName}</td>
+                                                <td className="px-4 py-3 text-right text-gray-600 dark:text-gray-300">{item.dose} {item.unit}</td>
+                                                <td className="px-4 py-3 text-center">
+                                                    <button onClick={() => handleRemoveItem(idx)} className="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20">
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                     </tbody>
                                 </table>
                             </div>
@@ -1370,7 +1369,7 @@ export const RecipesView: React.FC = () => {
                                     {type}
                                 </div>
                                 <div className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                    {items.map((item, idx) => (
+                                    {(items as PrescriptionItem[]).map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center px-3 py-2 text-sm">
                                             <span className="font-medium text-gray-800 dark:text-gray-200">{item.name}</span>
                                             <span className="font-mono font-bold text-agro-600 dark:text-agro-400">

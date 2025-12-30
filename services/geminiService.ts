@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Initialize the API client with Vite environment variable
@@ -33,6 +34,77 @@ export const generateAgronomicAdvice = async (
   }
 };
 
+// NUEVO: Transcripción de Audio para Recomendación (Multimodal)
+export const transcribeAudio = async (audioBlob: Blob): Promise<string> => {
+  if (!import.meta.env.VITE_API_KEY) return "Servicio de IA no disponible (API Key).";
+
+  try {
+    // Convert Blob to Base64
+    const reader = new FileReader();
+    const base64Promise = new Promise<string>((resolve, reject) => {
+      reader.onloadend = () => {
+        const base64String = (reader.result as string).split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+    });
+    reader.readAsDataURL(audioBlob);
+    const base64Audio = await base64Promise;
+
+    const prompt = `
+      Rol: Eres un asistente experto en agronomía transcribiendo una nota de voz de un ingeniero.
+      Tarea: Transcribe el audio adjunto a texto.
+      Instrucciones: 
+      - Corrige lige ramente la gramática para que sea un texto profesional.
+      - Mantén el tono técnico.
+      - Si hay pausas o muletillas ("eh", "este"), elimínalas.
+      - El texto final será usado como "Conclusión y Estrategia" en un informe oficial.
+    `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            { inlineData: { mimeType: "audio/wav", data: base64Audio } } // Assuming WAV map webm/mp4 if needed
+          ]
+        }
+      ]
+    });
+
+    return response.text || "No se pudo transcribir el audio.";
+
+  } catch (error) {
+    console.error("Transcription Error:", error);
+    return "Error al procesar el audio. Por favor intente escribir su recomendación manualmnete.";
+  }
+};
+
+// NUEVO: Refinar texto (Dictado -> Profesional)
+export const refineText = async (text: string): Promise<string> => {
+  if (!import.meta.env.VITE_API_KEY) return "Servicio de IA no disponible.";
+
+  try {
+    const prompt = `
+            Rol: Editor técnico agronómico.
+            Tarea: Reescribe el siguiente texto (que proviene de un dictado por voz) para que tenga un tono profesional, técnico y conciso para un informe oficial.
+            Texto: "${text}"
+            Salida: Solo el texto corregido.
+        `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }]
+    });
+
+    return response.text || text;
+  } catch (e) {
+    return text;
+  }
+};
+
 // NUEVO: Análisis estratégico del Dashboard (Sin Audios)
 export const generateDashboardAnalysis = async (
   context: {
@@ -40,7 +112,7 @@ export const generateDashboardAnalysis = async (
     statusCounts: Record<string, number>,
     topPests: { name: string, count: number }[],
     // Texto completo de notas para análisis semántico (SOLO INGENIERO)
-    allNotes: string[] 
+    allNotes: string[]
   },
   scope: string = "Global" // Alcance del análisis
 ): Promise<string> => {
@@ -92,6 +164,63 @@ export const generateDashboardAnalysis = async (
   } catch (error) {
     console.error("Gemini Error:", error);
     return "Ocurrió un error al procesar el análisis inteligente.";
+  }
+};
+
+// NUEVO: Generación de Estrategia basada en Datos (Reemplaza al Audio)
+export interface AnalysisContext {
+  companyName: string;
+  date: string;
+  fields: {
+    name: string;
+    crop: string;
+    hectares: number;
+    status: { red: number; yellow: number; green: number };
+    notes: string[];
+    pests: string[];
+  }[];
+}
+
+export const generateStrategicAnalysis = async (context: AnalysisContext): Promise<string> => {
+  if (!import.meta.env.VITE_API_KEY) return "Servicio de IA no disponible.";
+
+  try {
+    const prompt = `
+            Rol: Ingeniero Agrónomo Senior (Asesor Técnico).
+            Tarea: Analizar los datos de monitoreo de los siguientes campos y redactar la sección "CONCLUSIÓN Y ESTRATEGIA PROFESIONAL" para el informe técnico.
+            
+            Cliente: ${context.companyName}
+            Fecha: ${context.date}
+
+            DATOS DE LOS CAMPOS:
+            ${context.fields.map(f => `
+                - CAMPO: ${f.name} (${f.hectares} has) - Cultivo: ${f.crop}
+                  Situación: ${f.status.red > 0 ? 'CRÍTICA (' + f.status.red + ' lotes en rojo)' : f.status.yellow > 0 ? 'ALERTA (' + f.status.yellow + ' lotes)' : 'BUENA'}
+                  Plagas/Malezas detectadas: ${f.pests.join(', ') || 'Sin novedades'}
+                  Notas del recorredor: "${f.notes.join('. ')}"
+            `).join('\n')}
+
+            INSTRUCCIONES DE REDACCIÓN:
+            1. Escribe un texto continuo (sin viñetas, o con muy pocas) y profesional.
+            2. Empieza con un diagnóstico general de la situación sanitaria de la empresa.
+            3. Si hay situaciones CRÍTICAS (Rojo), menciónalas con urgencia y propón una estrategia de control (ej: aplicación inmediata).
+            4. Si hay situaciones de ALERTA (Amarillo), sugiere monitoreo o medidas preventivas.
+            5. Si todo está BIEN, destaca el buen manejo y sugiere próximas fechas de visita.
+            6. Sé conciso y directo. El tono debe ser de autoridad técnica pero servicial.
+            7. NO inventes información que no esté en los datos.
+            
+            Salida esperada: Solo el texto del análisis.
+        `;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-1.5-pro', // Using Pro for better reasoning "Deep Think" style
+      contents: [{ role: 'user', parts: [{ text: prompt }] }]
+    });
+
+    return response.text || "No se pudo generar el análisis.";
+  } catch (error) {
+    console.error("AI Analysis Error:", error);
+    return "Error al generar la propuesta. Intente manualmente.";
   }
 };
 
@@ -177,22 +306,22 @@ export const generatePdfReportNarrative = async (
         responseSchema: schema
       }
     });
-    
+
     // Parseo seguro del JSON
     const text = response.text || "{}";
     try {
-        const json = JSON.parse(text);
-        return {
-            resumen_labor: json.resumen_labor || "Informe generado automáticamente.",
-            analisis_sanitario: json.analisis_sanitario || "Revise los gráficos adjuntos.",
-            conclusion_estrategica: json.conclusion_estrategica || "Datos listos para la toma de decisiones."
-        };
+      const json = JSON.parse(text);
+      return {
+        resumen_labor: json.resumen_labor || "Informe generado automáticamente.",
+        analisis_sanitario: json.analisis_sanitario || "Revise los gráficos adjuntos.",
+        conclusion_estrategica: json.conclusion_estrategica || "Datos listos para la toma de decisiones."
+      };
     } catch (e) {
-        return {
-            resumen_labor: text, 
-            analisis_sanitario: "", 
-            conclusion_estrategica: ""
-        };
+      return {
+        resumen_labor: text,
+        analisis_sanitario: "",
+        conclusion_estrategica: ""
+      };
     }
 
   } catch (error) {

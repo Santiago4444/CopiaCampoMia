@@ -1,12 +1,12 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Modal, Button } from '../UI'; // Adjust import path as needed
+import React, { useState, useEffect } from 'react';
+import { Modal, Button } from '../UI';
 import { useData } from '../../contexts/DataContext';
-import { FileText, Check, Map as MapIcon, Calendar, CheckSquare } from 'lucide-react';
+import { FileText, Check } from 'lucide-react';
 
 interface ReportWizardModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onStartGeneration: (selectedFieldIds: string[]) => void;
+    onStartGeneration: (selectedFieldIds: string[], recommendation?: string) => void;
     preSelectedCompanyId?: string;
 }
 
@@ -17,163 +17,181 @@ export const ReportWizardModal: React.FC<ReportWizardModalProps> = ({
     preSelectedCompanyId
 }) => {
     const { data, userCompanies } = useData();
+    const [step, setStep] = useState(1);
 
-    // Step 1: Company Selection (if not constrained)
+    // Step 1: Company
     const [selectedCompanyId, setSelectedCompanyId] = useState(preSelectedCompanyId || '');
 
-    // Step 2: Field Selection
+    // Step 2: Fields
     const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
+
+    // Step 3: Recommendation (Manual Only)
+    const [recommendationText, setRecommendationText] = useState('');
 
     useEffect(() => {
         if (preSelectedCompanyId) setSelectedCompanyId(preSelectedCompanyId);
     }, [preSelectedCompanyId]);
 
-    // Available Companies
-    const companies = useMemo(() => userCompanies, [userCompanies]);
+    // Reset fields when company changes
+    useEffect(() => {
+        setSelectedFieldIds([]);
+    }, [selectedCompanyId]);
 
-    // Available Fields based on Company
-    const availableFields = useMemo(() => {
-        if (!selectedCompanyId) return [];
-        return data.fields.filter(f => f.companyId === selectedCompanyId);
-    }, [data.fields, selectedCompanyId]);
+    const handleNext = () => setStep(p => p + 1);
+    const handleBack = () => setStep(p => p - 1);
 
-    const handleToggleField = (fieldId: string) => {
-        setSelectedFieldIds(prev =>
-            prev.includes(fieldId)
-                ? prev.filter(id => id !== fieldId)
-                : [...prev, fieldId]
-        );
-    };
-
-    const handleSelectAll = () => {
-        if (selectedFieldIds.length === availableFields.length) {
-            setSelectedFieldIds([]);
+    const toggleField = (id: string) => {
+        if (selectedFieldIds.includes(id)) {
+            setSelectedFieldIds(prev => prev.filter(f => f !== id));
         } else {
-            setSelectedFieldIds(availableFields.map(f => f.id));
+            setSelectedFieldIds(prev => [...prev, id]);
         }
     };
 
-    const canStart = selectedFieldIds.length > 0;
+    const handleSelectAllFields = () => {
+        const companyFields = data.fields.filter(f => f.companyId === selectedCompanyId);
+        if (selectedFieldIds.length === companyFields.length) {
+            setSelectedFieldIds([]);
+        } else {
+            setSelectedFieldIds(companyFields.map(f => f.id));
+        }
+    };
+
+    const companyFields = data.fields.filter(f => f.companyId === selectedCompanyId);
+
+    if (!isOpen) return null;
 
     return (
-        <Modal
-            isOpen={isOpen}
-            onClose={onClose}
-            title="Generador de Informe Profesional"
-            size="lg"
-        >
+        <Modal isOpen={isOpen} onClose={onClose} title="Generador de Informe Profesional">
             <div className="space-y-6">
 
-                {/* Intro / Context */}
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg flex items-start gap-3 border border-blue-100 dark:border-blue-800">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-lg shrink-0 text-blue-600 dark:text-blue-200">
-                        <FileText className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <h4 className="font-bold text-blue-900 dark:text-blue-100 text-sm">Informe de Situación Multipropósito</h4>
-                        <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                            Esta herramienta generará un informe PDF detallado.
-                            El sistema recorrerá visualmente cada campo seleccionado para capturar el mapa con el zoom exacto y compilará:
-                            Situación de Lotes, Mapas, Recetas Pendientes y Resumen de Trabajo.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Step 1: Company Selection */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        1. Seleccionar Empresa
-                    </label>
-                    <select
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                        value={selectedCompanyId}
-                        onChange={(e) => {
-                            setSelectedCompanyId(e.target.value);
-                            setSelectedFieldIds([]); // Reset fields
-                        }}
-                        disabled={!!preSelectedCompanyId}
-                    >
-                        <option value="">Seleccione una empresa...</option>
-                        {companies.map(c => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
-                </div>
-
-                {/* Step 2: Field Selection */}
-                {selectedCompanyId && (
-                    <div className="animate-fade-in">
-                        <div className="flex justify-between items-end mb-2">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                2. Seleccionar Campos a Incluir
-                            </label>
-                            <button
-                                onClick={handleSelectAll}
-                                className="text-xs text-blue-600 dark:text-blue-400 font-medium hover:underline"
-                            >
-                                {selectedFieldIds.length === availableFields.length ? 'Deseleccionar Todos' : 'Seleccionar Todos'}
-                            </button>
+                {/* Steps Indicator */}
+                <div className="flex items-center justify-between px-4">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="flex items-center">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm
+                                ${step === i ? 'bg-green-600 text-white' : step > i ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}
+                            `}>
+                                {step > i ? <Check className="w-5 h-5" /> : i}
+                            </div>
+                            {i < 3 && <div className={`w-12 h-1 mx-2 ${step > i ? 'bg-green-500' : 'bg-gray-200'}`} />}
                         </div>
+                    ))}
+                </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1">
-                            {availableFields.length === 0 ? (
-                                <p className="text-xs text-gray-500 italic col-span-2 text-center py-4">No hay campos registrados para esta empresa.</p>
-                            ) : (
-                                availableFields.map(field => {
-                                    const plotCount = data.plots.filter(p => p.fieldId === field.id).length;
-                                    const isSelected = selectedFieldIds.includes(field.id);
-
-                                    return (
-                                        <div
-                                            key={field.id}
-                                            onClick={() => handleToggleField(field.id)}
-                                            className={`
-                                                cursor-pointer p-3 rounded-lg border transition-all flex items-center justify-between group
-                                                ${isSelected
-                                                    ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 ring-1 ring-green-500/20'
-                                                    : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-blue-300'
-                                                }
-                                            `}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className={`
-                                                    w-5 h-5 rounded border flex items-center justify-center transition-colors
-                                                    ${isSelected ? 'bg-green-500 border-green-500' : 'bg-white border-gray-300'}
-                                                `}>
-                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
-                                                </div>
-                                                <div>
-                                                    <h5 className={`font-bold text-sm ${isSelected ? 'text-green-900 dark:text-green-100' : 'text-gray-700 dark:text-gray-200'}`}>
-                                                        {field.name}
-                                                    </h5>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">{plotCount} Lotes</span>
-                                                </div>
-                                            </div>
-                                            <MapIcon className={`w-4 h-4 ${isSelected ? 'text-green-600' : 'text-gray-300 group-hover:text-gray-400'}`} />
-                                        </div>
-                                    );
-                                })
-                            )}
+                {/* STEP 1: SELECT COMPANY */}
+                {step === 1 && (
+                    <div className="space-y-4 animate-fade-in">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            1. Seleccione la Empresa
+                        </label>
+                        <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto">
+                            {userCompanies.map(company => (
+                                <button
+                                    key={company.id}
+                                    onClick={() => setSelectedCompanyId(company.id)}
+                                    className={`p-4 rounded-xl border text-left transition-all ${selectedCompanyId === company.id
+                                        ? 'border-green-500 bg-green-50 ring-1 ring-green-500'
+                                        : 'border-gray-200 hover:border-green-300'
+                                        }`}
+                                >
+                                    <div className="font-bold text-gray-800">{company.name}</div>
+                                    <div className="text-xs text-gray-500">{data.fields.filter(f => f.companyId === company.id).length} campos</div>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex justify-end pt-4">
+                            <Button
+                                variant="primary"
+                                disabled={!selectedCompanyId}
+                                onClick={handleNext}
+                            >
+                                Siguiente
+                            </Button>
                         </div>
                     </div>
                 )}
 
-                {/* Footer Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
-                    <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-                    <Button
-                        onClick={() => onStartGeneration(selectedFieldIds)}
-                        disabled={!canStart}
-                        className={`
-                            ${canStart
-                                ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg hover:shadow-xl hover:scale-105'
-                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'} 
-                            transition-all duration-300 font-bold px-8
-                        `}
-                    >
-                        COMENZAR GENRACIÓN
-                    </Button>
-                </div>
+                {/* STEP 2: SELECT FIELDS */}
+                {step === 2 && (
+                    <div className="space-y-4 animate-fade-in">
+                        <div className="flex justify-between items-center">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                2. Seleccione los Campos a Incluir
+                            </label>
+                            <button onClick={handleSelectAllFields} className="text-xs text-green-600 font-bold hover:underline">
+                                {selectedFieldIds.length === companyFields.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1">
+                            {companyFields.map(field => {
+                                const isSelected = selectedFieldIds.includes(field.id);
+                                return (
+                                    <div
+                                        key={field.id}
+                                        onClick={() => toggleField(field.id)}
+                                        className={`cursor-pointer p-3 rounded-lg border flex items-center gap-3 transition-all ${isSelected
+                                            ? 'bg-green-50 border-green-500'
+                                            : 'bg-white border-gray-200 hover:border-gray-300'
+                                            }`}
+                                    >
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center ${isSelected ? 'bg-green-500 border-green-500' : 'border-gray-300'}`}>
+                                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-bold text-gray-800">{field.name}</div>
+                                            <div className="text-xs text-gray-500">{field.hectares} has</div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex justify-between pt-4">
+                            <Button variant="secondary" onClick={handleBack}>Atrás</Button>
+                            <Button
+                                variant="primary"
+                                disabled={selectedFieldIds.length === 0}
+                                onClick={handleNext}
+                            >
+                                Siguiente ({selectedFieldIds.length})
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 3: TEXT & CONCLUSIONS */}
+                {step === 3 && (
+                    <div className="space-y-4 animate-fade-in">
+                        <div className="flex justify-between items-center">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                3. Conclusión y Estrategia
+                            </label>
+                        </div>
+
+                        <div className="relative">
+                            <textarea
+                                className="w-full p-4 border rounded-xl h-60 focus:ring-2 outline-none resize-none dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-green-500"
+                                placeholder="Escriba aquí su conclusión profesional..."
+                                value={recommendationText}
+                                onChange={(e) => setRecommendationText(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex justify-between pt-4">
+                            <Button variant="secondary" onClick={handleBack}>Atrás</Button>
+                            <Button
+                                variant="primary"
+                                onClick={() => onStartGeneration(selectedFieldIds, recommendationText)}
+                                className="bg-green-600 hover:bg-green-700 text-white shadow-lg transform hover:scale-105 transition-all"
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                GENERAR INFORME FINAL
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </Modal>
     );
