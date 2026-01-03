@@ -236,11 +236,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {renderItem('home', 'Inicio / Muestreo', ClipboardList)}
 
+        {(currentUser?.role === 'admin' || currentUser?.role === 'company' || currentUser?.role === 'operator') && (
+          renderItem('history', 'Historial Muestreos', History)
+        )}
+
         {(currentUser?.role === 'admin' || currentUser?.role === 'company') && (
           <>
-            {renderItem('history', 'Historial Muestreos', History)}
             {renderItem('recipes', 'Recetas', FileText)}
             {renderItem('analytics', 'Dashboard', BarChart3)}
+          </>
+        )}
+
+        {currentUser?.role === 'admin' && (
+          <>
             {renderItem('budget-manager', 'Presupuestos', Wallet)}
             {renderItem('track-history', 'Rutas GPS', Route)}
           </>

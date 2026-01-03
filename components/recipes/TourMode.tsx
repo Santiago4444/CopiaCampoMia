@@ -402,8 +402,8 @@ export const TourMode: React.FC<TourModeProps> = ({ onCancel, onFinish }) => {
                                 }}
                             />
                         </div>
-                        <div className="w-full md:w-32"><Input label="Dosis" type="number" value={currentDose} onChange={(e) => setCurrentDose(e.target.value)} /></div>
-                        <div className="w-full md:w-32"><Select label="Unidad" options={[{ value: 'Lt/Ha', label: 'Lt/Ha' }, { value: 'Kg/Ha', label: 'Kg/Ha' }, { value: 'ml/Ha', label: 'ml/Ha' }, { value: 'g/Ha', label: 'g/Ha' }]} value={currentUnit} onChange={(e) => setCurrentUnit(e.target.value)} disabled={true} /></div>
+                        <div className="w-full md:w-48"><Input label="Dosis" type="number" value={currentDose} onChange={(e) => setCurrentDose(e.target.value)} /></div>
+                        <div className="w-full md:w-32"><Input label="Unidad" value={currentUnit} disabled={true} readOnly /></div>
                         <div className="flex items-end pb-1"><Button onClick={handleAddItem} disabled={!currentItemId || !currentDose}><Plus className="w-4 h-4" /></Button></div>
                     </div>
 

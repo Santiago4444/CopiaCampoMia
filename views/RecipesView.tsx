@@ -217,7 +217,7 @@ export const RecipesView: React.FC = () => {
 
         Object.entries(calculateShoppingList).forEach(([type, items]) => {
             text += `*${type.toUpperCase()}*\n`;
-            items.forEach(item => {
+            (items as any[]).forEach(item => {
                 text += `- ${item.name}: ${item.quantity.toLocaleString('es-AR', { maximumFractionDigits: 2 })} ${item.unit}\n`;
             });
             text += `\n`;
@@ -420,7 +420,7 @@ export const RecipesView: React.FC = () => {
 
                 // Items
                 doc.setFont("helvetica", "normal");
-                items.forEach((item) => {
+                (items as any[]).forEach((item) => {
                     doc.text(item.name, margin + 5, yPos);
                     const qtyText = `${item.quantity.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${item.unit}`;
                     doc.text(qtyText, pageWidth - margin - 5, yPos, { align: 'right' });
@@ -977,8 +977,8 @@ export const RecipesView: React.FC = () => {
                                     placeholder="Buscar producto..."
                                 />
                             </div>
-                            <div className="w-full md:w-32"><Input label="Dosis" value={currentDose} onChange={(e) => setCurrentDose(e.target.value)} placeholder="Ej: 2.5" /></div>
-                            <div className="w-full md:w-32"><Select label="Unidad" options={[{ value: 'Lt/Ha', label: 'Lt/Ha' }, { value: 'Kg/Ha', label: 'Kg/Ha' }, { value: 'ml/Ha', label: 'ml/Ha' }, { value: 'g/Ha', label: 'g/Ha' }]} value={currentUnit} onChange={(e) => setCurrentUnit(e.target.value)} disabled={true} /></div>
+                            <div className="w-full md:w-48"><Input label="Dosis" value={currentDose} onChange={(e) => setCurrentDose(e.target.value)} placeholder="Ej: 2.5" /></div>
+                            <div className="w-full md:w-32"><Input label="Unidad" value={currentUnit} disabled={true} readOnly /></div>
 
                             <div className="flex items-center gap-2">
                                 <Button onClick={handleAddItem} disabled={!currentItemId || !currentDose}><Plus className="w-4 h-4" /></Button>
@@ -1065,8 +1065,9 @@ export const RecipesView: React.FC = () => {
 
             {viewMode === 'history' && (
                 <div className="space-y-4 animate-fade-in relative">
-                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-4 gap-2">
-                        <input type="date" className="px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-700 text-xs dark:text-white" value={historyFilter.dateFrom} onChange={e => setHistoryFilter({ ...historyFilter, dateFrom: e.target.value })} placeholder="Desde" />
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-5 gap-2">
+                        <input type="date" className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-700 text-xs dark:text-white" value={historyFilter.dateFrom} onChange={e => setHistoryFilter({ ...historyFilter, dateFrom: e.target.value })} placeholder="Desde" />
+                        <input type="date" className="w-full px-3 py-2 border rounded-lg bg-gray-50 dark:bg-gray-900 dark:border-gray-700 text-xs dark:text-white" value={historyFilter.dateTo} onChange={e => setHistoryFilter({ ...historyFilter, dateTo: e.target.value })} placeholder="Hasta" />
                         <Select label="" options={userCompanies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={historyFilter.companyId} onChange={e => setHistoryFilter({ ...historyFilter, companyId: e.target.value, fieldId: '' })} placeholder="Empresa..." className="text-xs py-2" />
                         <Select label="" options={data.fields.filter(f => f.companyId === historyFilter.companyId).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={historyFilter.fieldId} onChange={e => setHistoryFilter({ ...historyFilter, fieldId: e.target.value })} disabled={!historyFilter.companyId} placeholder="Campo..." className="text-xs py-2" />
                         <Button variant="ghost" onClick={() => setHistoryFilter({ companyId: '', fieldId: '', dateFrom: '', dateTo: '' })} className="text-xs">Limpiar</Button>
@@ -1198,12 +1199,14 @@ export const RecipesView: React.FC = () => {
                                             {recipe.notes && (
                                                 <div className="mb-4"><h4 className="font-bold text-gray-700 dark:text-gray-300 mb-2 text-xs uppercase">Observaciones</h4><p className={`bg-white dark:bg-gray-800 p-3 rounded border border-gray-200 dark:border-gray-700 italic ${getRoleColorClass(getUserRole(recipe.ownerId, data.users, dataOwnerId))}`}>{recipe.notes}</p></div>
                                             )}
-                                            <div className="flex justify-end pt-2 gap-2 flex-wrap">
-                                                <button onClick={(e) => handleOpenAddPlotModal(recipe, e)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-xs flex items-center font-medium px-3 py-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors" title="Agregar lotes del mismo campo"><PlusCircle className="w-4 h-4 mr-1" /> Sumar Lotes</button>
-                                                <button onClick={(e) => handleCloneRecipe(recipe, e)} className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 text-xs flex items-center font-medium px-3 py-2 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors" title="Copiar receta a otro campo"><Copy className="w-4 h-4 mr-1" /> Clonar</button>
-                                                <button onClick={(e) => handleEditRecipe(recipe, e)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs flex items-center font-medium px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"><Edit className="w-4 h-4 mr-1" /> Editar</button>
-                                                <button onClick={(e) => handleDeletePrescriptionClick(e, recipe.id || recipe._operationId)} className="text-red-500 hover:text-red-700 text-xs flex items-center font-medium px-3 py-2 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4 mr-1" /> Eliminar</button>
-                                            </div>
+                                            {!isClient && (
+                                                <div className="flex justify-end pt-2 gap-2 flex-wrap">
+                                                    <button onClick={(e) => handleOpenAddPlotModal(recipe, e)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-xs flex items-center font-medium px-3 py-2 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors" title="Agregar lotes del mismo campo"><PlusCircle className="w-4 h-4 mr-1" /> Sumar Lotes</button>
+                                                    <button onClick={(e) => handleCloneRecipe(recipe, e)} className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 text-xs flex items-center font-medium px-3 py-2 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors" title="Copiar receta a otro campo"><Copy className="w-4 h-4 mr-1" /> Clonar</button>
+                                                    <button onClick={(e) => handleEditRecipe(recipe, e)} className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs flex items-center font-medium px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"><Edit className="w-4 h-4 mr-1" /> Editar</button>
+                                                    <button onClick={(e) => handleDeletePrescriptionClick(e, recipe.id || recipe._operationId)} className="text-red-500 hover:text-red-700 text-xs flex items-center font-medium px-3 py-2 hover:bg-red-50 rounded transition-colors"><Trash2 className="w-4 h-4 mr-1" /> Eliminar</button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -1369,7 +1372,7 @@ export const RecipesView: React.FC = () => {
                                     {type}
                                 </div>
                                 <div className="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
-                                    {(items as PrescriptionItem[]).map((item, idx) => (
+                                    {(items as any[]).map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center px-3 py-2 text-sm">
                                             <span className="font-medium text-gray-800 dark:text-gray-200">{item.name}</span>
                                             <span className="font-mono font-bold text-agro-600 dark:text-agro-400">

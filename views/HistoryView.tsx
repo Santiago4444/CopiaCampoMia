@@ -38,7 +38,7 @@ export const HistoryView: React.FC = () => {
         yesterday.setDate(today.getDate() - 1);
         const formatDateInput = (date: Date) => date.toISOString().split('T')[0];
         return {
-            companyId: '', fieldId: '', plotId: '', userId: '', searchTerm: '',
+            companyId: '', fieldId: '', plotId: '', userId: currentUser.role === 'operator' ? currentUser.id : '', searchTerm: '',
             dateFrom: formatDateInput(yesterday), dateTo: formatDateInput(today)
         };
     });
@@ -307,7 +307,7 @@ export const HistoryView: React.FC = () => {
                     <Select label="" options={userCompanies.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(c => ({ value: c.id, label: c.name }))} value={historyFilter.companyId} onChange={(e) => setHistoryFilter({ ...historyFilter, companyId: e.target.value, fieldId: '', plotId: '' })} placeholder="Todas las empresas" className="py-1 text-xs" />
                     <Select label="" options={historyFields.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(f => ({ value: f.id, label: f.name }))} value={historyFilter.fieldId} onChange={(e) => setHistoryFilter({ ...historyFilter, fieldId: e.target.value, plotId: '' })} disabled={!historyFilter.companyId} placeholder="Todos los campos" className="py-1 text-xs" />
                     <Select label="" options={historyPlots.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })).map(p => ({ value: p.id, label: p.name }))} value={historyFilter.plotId} onChange={(e) => setHistoryFilter({ ...historyFilter, plotId: e.target.value })} disabled={!historyFilter.fieldId} placeholder="Todos los lotes" className="py-1 text-xs" />
-                    <Select label="" options={historyUsers} value={historyFilter.userId} onChange={(e) => setHistoryFilter({ ...historyFilter, userId: e.target.value })} placeholder="Todos los usuarios" className="py-1 text-xs" />
+                    <Select label="" options={historyUsers} value={historyFilter.userId} onChange={(e) => setHistoryFilter({ ...historyFilter, userId: e.target.value })} placeholder="Todos los usuarios" className="py-1 text-xs" disabled={currentUser.role === 'operator'} />
                 </div>
             </div>
 
