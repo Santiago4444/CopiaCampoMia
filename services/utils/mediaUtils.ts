@@ -3,7 +3,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { storage } from '../firebase';
 
 export const uploadMedia = async (blobUrl: string, path: string): Promise<string> => {
-    // Timeout de 5 segundos para evitar colgarse en modo offline
+    // Timeout de 20 segundos para evitar problemas en conexiones lentas
     console.log('📤 Iniciando subida de media:', path);
     const uploadPromise = (async () => {
         const response = await fetch(blobUrl);
@@ -15,11 +15,11 @@ export const uploadMedia = async (blobUrl: string, path: string): Promise<string
         console.log('✅ Media subida exitosamente:', downloadURL);
         return downloadURL;
     })();
-    
-    const timeoutPromise = new Promise<never>((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout: Firebase Storage no responde (5s)')), 5000)
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout: Firebase Storage no responde (20s)')), 20000)
     );
-    
+
     return Promise.race([uploadPromise, timeoutPromise]);
 };
 
@@ -38,23 +38,23 @@ export const deleteMedia = async (url: string | null | undefined): Promise<void>
 export const compressImage = async (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        
+
         reader.onerror = () => reject(new Error('Error leyendo archivo'));
-        
+
         reader.onload = (e) => {
             const img = new Image();
-            
+
             img.onerror = () => reject(new Error('Error cargando imagen'));
-            
+
             img.onload = () => {
                 try {
                     const canvas = document.createElement('canvas');
                     const MAX_WIDTH = 1920;
                     const MAX_HEIGHT = 1920;
-                    
+
                     let width = img.width;
                     let height = img.height;
-                    
+
                     // Calcular escala manteniendo aspect ratio
                     if (width > height) {
                         if (width > MAX_WIDTH) {
@@ -67,19 +67,19 @@ export const compressImage = async (file: File): Promise<Blob> => {
                             height = MAX_HEIGHT;
                         }
                     }
-                    
+
                     canvas.width = width;
                     canvas.height = height;
-                    
+
                     const ctx = canvas.getContext('2d');
                     if (!ctx) {
                         reject(new Error('No se pudo obtener contexto 2D'));
                         return;
                     }
-                    
+
                     // Dibujar imagen redimensionada
                     ctx.drawImage(img, 0, 0, width, height);
-                    
+
                     // Convertir a Blob con compresión JPEG
                     canvas.toBlob(
                         (blob) => {
@@ -97,14 +97,14 @@ export const compressImage = async (file: File): Promise<Blob> => {
                     reject(error);
                 }
             };
-            
+
             img.src = e.target!.result as string;
         };
-        
+
         reader.readAsDataURL(file);
     });
 };
 
-export const processUploadQueue = async () => { 
-    console.log("Processing queue..."); 
+export const processUploadQueue = async () => {
+    console.log("Processing queue...");
 };

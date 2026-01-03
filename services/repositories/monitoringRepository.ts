@@ -6,6 +6,7 @@ import { uploadMedia, deleteMedia } from '../utils/mediaUtils';
 import { enqueueOperation, MediaIds } from '../offlineQueueService';
 import { saveBlobToIndexedDB } from '../indexedDBService';
 import { addToLocalCache } from '../localCacheService';
+import { syncPendingOperations } from '../autoSyncService';
 
 export const addMonitoring = async (data: Partial<MonitoringRecord>, audioBlobUrl?: string) => {
     const dateStr = new Date().toISOString().split('T')[0];
@@ -41,6 +42,9 @@ export const addMonitoring = async (data: Partial<MonitoringRecord>, audioBlobUr
         } catch (error: any) {
             // Si falla Firebase, caer al flujo offline
             console.warn('📴 Error de Firebase, guardando localmente...');
+            if (navigator.onLine) {
+                setTimeout(() => syncPendingOperations().catch(console.error), 5000);
+            }
         }
     }
 
@@ -147,6 +151,9 @@ export const updateMonitoring = async (id: string, data: Partial<MonitoringRecor
         } catch (error) {
             // Si falla Firebase, caer al flujo offline
             console.warn('📴 Error de Firebase, guardando localmente...');
+            if (navigator.onLine) {
+                setTimeout(() => syncPendingOperations().catch(console.error), 5000);
+            }
         }
     }
 
@@ -275,13 +282,16 @@ export const addLotSummary = async (data: Partial<LotSummary>, audioBlobUrl?: st
         // Timeout de 3 segundos para evitar que se cuelgue en offline
         const savePromise = addDoc(collection(db, 'lotSummaries'), docData);
         const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Timeout: Firestore no responde (3s)')), 3000)
+            setTimeout(() => reject(new Error('Timeout: Firestore no responde (10s)')), 10000)
         );
 
         await Promise.race([savePromise, timeoutPromise]);
         console.log('✅ Resumen de lote guardado en Firebase');
     } catch (error) {
         console.warn('📴 Sin conexión, guardando audio y encolando resumen de lote...');
+        if (navigator.onLine) {
+            setTimeout(() => syncPendingOperations().catch(console.error), 5000);
+        }
 
         const mediaIds: MediaIds = {};
         let allMediaSavedSuccessfully = true;
@@ -376,6 +386,9 @@ export const updateLotSummaryFeedback = async (id: string, status: 'verde' | 'am
         console.log('✅ Feedback de resumen actualizado en Firebase');
     } catch (error) {
         console.warn('📴 Sin conexión, guardando audio y encolando feedback...');
+        if (navigator.onLine) {
+            setTimeout(() => syncPendingOperations().catch(console.error), 5000);
+        }
 
         const mediaIds: MediaIds = {};
         let allMediaSavedSuccessfully = true;

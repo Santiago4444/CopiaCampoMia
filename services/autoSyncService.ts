@@ -9,17 +9,18 @@ import { uploadMedia } from './utils/mediaUtils';
 import { removeFromLocalCache } from './localCacheService';
 
 const MAX_RETRIES = 3;
+let isSyncInProgress = false;
 
 // Procesar una operación de la cola
 const processOperation = async (operation: any) => {
   const startTime = Date.now();
   console.log(`🔄 Procesando operación: ${operation.type} (ID: ${operation.id}, Intento: ${operation.retries + 1}/${MAX_RETRIES})`);
-  
+
   try {
     // PASO 1: Recuperar y subir archivos multimedia desde IndexedDB
     let finalData = { ...operation.data };
     const mediaUploadResults = { photo: false, audio: false };
-    
+
     if (operation.mediaIds) {
       // Subir foto si existe
       if (operation.mediaIds.photo) {
@@ -31,15 +32,15 @@ const processOperation = async (operation: any) => {
             const timeStr = new Date().toTimeString().split(' ')[0].replace(/:/g, '');
             const baseFolder = `${finalData.companyId}/${finalData.fieldId}/${finalData.plotId}`;
             const fileName = `${dateStr}_${timeStr}_${Math.floor(Math.random() * 1000)}`;
-            
+
             const photoUrl = await uploadMedia(photoBlobUrl, `monitoring-photos/${baseFolder}/${fileName}.jpg`);
-            
+
             if (!finalData.media) finalData.media = {};
             finalData.media.photoUrl = photoUrl;
-            
+
             // Limpiar blob URL temporal
             URL.revokeObjectURL(photoBlobUrl);
-            
+
             // Eliminar de IndexedDB
             await deleteBlobFromIndexedDB(operation.mediaIds.photo);
             console.log(`✅ Foto subida desde IndexedDB: ${operation.mediaIds.photo} (${(photoBlob.size / 1024).toFixed(1)}KB)`);
@@ -56,7 +57,7 @@ const processOperation = async (operation: any) => {
           // Continuar con la operación sin la foto
         }
       }
-      
+
       // Subir audio si existe (solo para monitorings que usan media.audioUrl)
       // LotSummaries y Prescriptions tienen su propia lógica y usan audioUrl en la raíz
       if (operation.mediaIds.audio && operation.type === 'addMonitoring') {
@@ -68,15 +69,15 @@ const processOperation = async (operation: any) => {
             const timeStr = new Date().toTimeString().split(' ')[0].replace(/:/g, '');
             const baseFolder = `${finalData.companyId}/${finalData.fieldId}/${finalData.plotId}`;
             const fileName = `${dateStr}_${timeStr}_${Math.floor(Math.random() * 1000)}`;
-            
+
             const audioUrl = await uploadMedia(audioBlobUrl, `monitoring-audios/${baseFolder}/${fileName}.webm`);
-            
+
             if (!finalData.media) finalData.media = {};
             finalData.media.audioUrl = audioUrl;
-            
+
             // Limpiar blob URL temporal
             URL.revokeObjectURL(audioBlobUrl);
-            
+
             // Eliminar de IndexedDB
             await deleteBlobFromIndexedDB(operation.mediaIds.audio);
             console.log(`✅ Audio subido desde IndexedDB: ${operation.mediaIds.audio} (${(audioBlob.size / 1024).toFixed(1)}KB)`);
@@ -94,33 +95,33 @@ const processOperation = async (operation: any) => {
         }
       }
     }
-    
+
     // PASO 2: Ejecutar la operación con los datos finales
     switch (operation.type) {
       case 'addMonitoring':
         // Limpiar solo metadata offline (createdAt debe ir a Firebase)
         const { _offlineMedia, _operationId, ...cleanData } = finalData;
         await addDoc(collection(db, 'monitorings'), cleanData);
-        
+
         // PASO 3: Limpiar del cache local (feedback ya no necesario)
         if (_operationId) {
           removeFromLocalCache('monitorings', _operationId);
         }
         break;
-        
+
       case 'updateMonitoring':
         const { id: monId, _offlineMedia: _, ...monData } = finalData;
         await updateDoc(doc(db, 'monitorings', monId), monData);
         break;
-        
+
       case 'deleteMonitoring':
         await deleteDoc(doc(db, 'monitorings', operation.data.id));
         break;
-        
+
       case 'addLotSummary':
         // Limpiar solo metadata offline (createdAt debe ir a Firebase)
         const { _operationId: lotOpId, ...lotCleanData } = finalData;
-        
+
         // Para lot summaries, manejar audio si existe
         if (operation.mediaIds?.audio) {
           try {
@@ -137,15 +138,15 @@ const processOperation = async (operation: any) => {
           }
         }
         await addDoc(collection(db, 'lotSummaries'), lotCleanData);
-        
+
         // Delay largo antes de limpiar para transición suave
         await new Promise(resolve => setTimeout(resolve, 10000));
-        
+
         // Limpiar del cache local
         if (lotOpId) {
           removeFromLocalCache('lotSummaries', lotOpId);
         }
-        
+
         // Limpiar blob de IndexedDB después del delay largo
         if (operation.mediaIds?.audio) {
           try {
@@ -156,15 +157,15 @@ const processOperation = async (operation: any) => {
           }
         }
         break;
-        
+
       case 'deleteLotSummary':
         await deleteDoc(doc(db, 'lotSummaries', operation.data.id));
         break;
-        
+
       case 'updateLotSummaryFeedback':
         const { id: summaryId, status, notes, audioDuration } = finalData;
         const updateData: any = { engineerStatus: status, engineerNotes: notes, isReviewed: true };
-        
+
         // Manejar audio de feedback si existe
         if (operation.mediaIds?.audio) {
           try {
@@ -181,12 +182,12 @@ const processOperation = async (operation: any) => {
             console.error(`❌ Error subiendo audio de feedback:`, error);
           }
         }
-        
+
         await updateDoc(doc(db, 'lotSummaries', summaryId), updateData);
-        
+
         // Delay largo antes de limpiar blob
         await new Promise(resolve => setTimeout(resolve, 10000));
-        
+
         // Limpiar blob de IndexedDB después del delay largo
         if (operation.mediaIds?.audio) {
           try {
@@ -197,11 +198,11 @@ const processOperation = async (operation: any) => {
           }
         }
         break;
-        
+
       case 'addPrescription':
         // Limpiar metadata offline antes de subir (solo _operationId y _offlineMedia)
         const { _operationId: prescOpId, _offlineMedia: prescMedia, ...prescCleanData } = finalData;
-        
+
         // Manejar audio si existe
         if (operation.mediaIds?.audio) {
           try {
@@ -217,14 +218,14 @@ const processOperation = async (operation: any) => {
             console.error(`❌ Error subiendo audio de receta:`, error);
           }
         }
-        
+
         await addDoc(collection(db, 'prescriptions'), prescCleanData);
-        
+
         // PASO 3: Limpiar del cache local (IGUAL QUE MONITORINGS)
         if (prescOpId) {
           removeFromLocalCache('prescriptions', prescOpId);
         }
-        
+
         // Limpiar blob de IndexedDB
         if (operation.mediaIds?.audio) {
           try {
@@ -235,10 +236,10 @@ const processOperation = async (operation: any) => {
           }
         }
         break;
-        
+
       case 'updatePrescription':
         const { id: prescId, _offlineMedia: prescUpMedia, ...prescUpdateData } = finalData;
-        
+
         // Manejar audio si existe
         if (operation.mediaIds?.audio) {
           try {
@@ -254,12 +255,12 @@ const processOperation = async (operation: any) => {
             console.error(`❌ Error subiendo audio de receta actualizada:`, error);
           }
         }
-        
+
         await updateDoc(doc(db, 'prescriptions', prescId), prescUpdateData);
-        
+
         // Delay largo antes de limpiar blob - dar tiempo a que Firestore y red se estabilicen
         await new Promise(resolve => setTimeout(resolve, 10000));
-        
+
         // Limpiar blob de IndexedDB después del delay largo
         if (operation.mediaIds?.audio) {
           try {
@@ -270,21 +271,21 @@ const processOperation = async (operation: any) => {
           }
         }
         break;
-        
+
       case 'deletePrescription':
         await deleteDoc(doc(db, 'prescriptions', operation.data.id));
         break;
-        
+
       default:
         console.warn(`⚠️ Tipo de operación desconocido: ${operation.type}`);
     }
-    
+
     // Operación exitosa - remover de la cola
     const duration = Date.now() - startTime;
     console.log(`✅ Operación completada exitosamente: ${operation.type} (ID: ${operation.id}, Duración: ${duration}ms, Media: foto=${mediaUploadResults.photo}, audio=${mediaUploadResults.audio})`);
     dequeueOperation(operation.id);
     return true;
-    
+
   } catch (error: any) {
     const duration = Date.now() - startTime;
     console.error(`❌ Error procesando operación ${operation.id}:`, {
@@ -300,7 +301,7 @@ const processOperation = async (operation: any) => {
         plotId: operation.data.plotId
       } : 'no data'
     });
-    
+
     // Incrementar reintentos
     if (operation.retries < MAX_RETRIES) {
       incrementRetries(operation.id);
@@ -326,50 +327,61 @@ const getOperationPriority = (type: string): number => {
 
 // Sincronizar todas las operaciones pendientes con orden inteligente
 export const syncPendingOperations = async () => {
-  const queue = getQueue();
-  
-  if (queue.length === 0) {
-    console.log('✅ No hay operaciones pendientes para sincronizar');
+  if (isSyncInProgress) {
+    console.log('⚠️ Sincronización ya en curso, omitiendo solicitud duplicada.');
     return;
   }
-  
-  console.log(`🔄 Iniciando sincronización de ${queue.length} operaciones pendientes...`);
-  updateSyncStatus({ isSyncing: true });
-  
-  // Ordenar operaciones por prioridad y timestamp
-  const sortedQueue = [...queue].sort((a, b) => {
-    const priorityDiff = getOperationPriority(a.type) - getOperationPriority(b.type);
-    if (priorityDiff !== 0) return priorityDiff;
-    // Si tienen la misma prioridad, ordenar por timestamp (más antiguo primero)
-    return a.timestamp - b.timestamp;
-  });
-  
-  console.log(`📋 Orden de sincronización:`, sortedQueue.map(op => `${op.type} (${new Date(op.timestamp).toLocaleTimeString()})`));
-  
-  let successCount = 0;
-  let failCount = 0;
-  
-  // Procesar operaciones secuencialmente en orden de prioridad
-  for (const operation of sortedQueue) {
-    const success = await processOperation(operation);
-    if (success) {
-      successCount++;
-    } else {
-      failCount++;
+
+  isSyncInProgress = true;
+
+  try {
+    const queue = getQueue();
+
+    if (queue.length === 0) {
+      console.log('✅ No hay operaciones pendientes para sincronizar');
+      return;
     }
-    
-    // Pequeña pausa entre operaciones para no saturar el servidor
-    await new Promise(resolve => setTimeout(resolve, 100));
+
+    console.log(`🔄 Iniciando sincronización de ${queue.length} operaciones pendientes...`);
+    updateSyncStatus({ isSyncing: true });
+
+    // Ordenar operaciones por prioridad y timestamp
+    const sortedQueue = [...queue].sort((a, b) => {
+      const priorityDiff = getOperationPriority(a.type) - getOperationPriority(b.type);
+      if (priorityDiff !== 0) return priorityDiff;
+      // Si tienen la misma prioridad, ordenar por timestamp (más antiguo primero)
+      return a.timestamp - b.timestamp;
+    });
+
+    console.log(`📋 Orden de sincronización:`, sortedQueue.map(op => `${op.type} (${new Date(op.timestamp).toLocaleTimeString()})`));
+
+    let successCount = 0;
+    let failCount = 0;
+
+    // Procesar operaciones secuencialmente en orden de prioridad
+    for (const operation of sortedQueue) {
+      const success = await processOperation(operation);
+      if (success) {
+        successCount++;
+      } else {
+        failCount++;
+      }
+
+      // Pequeña pausa entre operaciones para no saturar el servidor
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    updateSyncStatus({
+      isSyncing: false,
+      lastSync: Date.now()
+    });
+
+    console.log(`✅ Sincronización completada: ${successCount} exitosas, ${failCount} fallidas`);
+
+    return { successCount, failCount };
+  } finally {
+    isSyncInProgress = false;
   }
-  
-  updateSyncStatus({ 
-    isSyncing: false, 
-    lastSync: Date.now() 
-  });
-  
-  console.log(`✅ Sincronización completada: ${successCount} exitosas, ${failCount} fallidas`);
-  
-  return { successCount, failCount };
 };
 
 // Inicializar listener de conexión
@@ -377,7 +389,7 @@ export const initAutoSync = () => {
   // Listener para evento 'online'
   window.addEventListener('online', async () => {
     console.log('🌐 Conexión detectada, iniciando sincronización automática...');
-    
+
     // Esperar 2 segundos para asegurar que la conexión esté estable
     setTimeout(async () => {
       try {
@@ -387,11 +399,22 @@ export const initAutoSync = () => {
       }
     }, 2000);
   });
-  
+
   // Listener para evento 'offline'
   window.addEventListener('offline', () => {
     console.log('📴 Sin conexión - modo offline activado');
   });
-  
-  console.log('🔌 Auto-sincronización inicializada');
+
+  // Intervalo de reintento cada 60 segundos
+  setInterval(async () => {
+    if (navigator.onLine && !isSyncInProgress) {
+      try {
+        await syncPendingOperations();
+      } catch (error) {
+        console.error('❌ Error en intervalo de sincronización:', error);
+      }
+    }
+  }, 60000);
+
+  console.log('🔌 Auto-sincronización inicializada (Listeners + Intervalo 60s)');
 };
