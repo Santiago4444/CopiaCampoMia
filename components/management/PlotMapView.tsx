@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Button, Select } from '../UI';
 import { Plot, Company, Field } from '../../types';
 import { Map as MapIcon, Layers, Search, Check, X, Move, List } from 'lucide-react';
@@ -23,22 +23,24 @@ export const PlotMapView: React.FC<PlotMapViewProps> = ({ plots, companies, fiel
 
     // Edit Mode State
     const [editingPlotId, setEditingPlotId] = useState<string | null>(null);
-    const [tempPos, setTempPos] = useState<{ lat: number, lng: number } | null>(null);
+    const tempPosRef = useRef<{ lat: number, lng: number } | null>(null);
 
     // Derived Data
     const availableFields = fields.filter(f => !filterCompanyId || f.companyId === filterCompanyId);
 
-    const filteredPlots = plots.filter(p => {
-        if (!p.lat || !p.lng) return false;
-        if (filterCompanyId) {
-            const field = fields.find(f => f.id === p.fieldId);
-            const cId = p.companyId || field?.companyId;
-            if (cId !== filterCompanyId) return false;
-        }
-        if (filterFieldId && p.fieldId !== filterFieldId) return false;
-        if (searchTerm && !p.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-        return true;
-    });
+    const filteredPlots = useMemo(() => {
+        return plots.filter(p => {
+            if (!p.lat || !p.lng) return false;
+            if (filterCompanyId) {
+                const field = fields.find(f => f.id === p.fieldId);
+                const cId = p.companyId || field?.companyId;
+                if (cId !== filterCompanyId) return false;
+            }
+            if (filterFieldId && p.fieldId !== filterFieldId) return false;
+            if (searchTerm && !p.name.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+            return true;
+        });
+    }, [plots, fields, filterCompanyId, filterFieldId, searchTerm]);
 
     // Initialize Map
     useEffect(() => {
@@ -184,7 +186,7 @@ export const PlotMapView: React.FC<PlotMapViewProps> = ({ plots, companies, fiel
             if (isEditing) {
                 marker.on('drag', (e: any) => {
                     const pos = e.target.getLatLng();
-                    setTempPos({ lat: pos.lat, lng: pos.lng });
+                    tempPosRef.current = { lat: pos.lat, lng: pos.lng };
                 });
             }
 
@@ -202,19 +204,19 @@ export const PlotMapView: React.FC<PlotMapViewProps> = ({ plots, companies, fiel
     // Actions
     const startEditing = (plot: Plot) => {
         setEditingPlotId(plot.id);
-        setTempPos({ lat: plot.lat!, lng: plot.lng! });
+        tempPosRef.current = { lat: plot.lat!, lng: plot.lng! };
     };
 
     const cancelEditing = () => {
         setEditingPlotId(null);
-        setTempPos(null);
+        tempPosRef.current = null;
     };
 
     const saveLocation = async () => {
-        if (!editingPlotId || !tempPos) return;
-        await onUpdatePlot(editingPlotId, tempPos.lat, tempPos.lng);
+        if (!editingPlotId || !tempPosRef.current) return;
+        await onUpdatePlot(editingPlotId, tempPosRef.current.lat, tempPosRef.current.lng);
         setEditingPlotId(null);
-        setTempPos(null);
+        tempPosRef.current = null;
     };
 
     return (

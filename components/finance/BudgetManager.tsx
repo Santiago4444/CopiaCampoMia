@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useUI } from '../../contexts/UIContext';
 import { Select, Button, Input } from '../UI';
-import { Save, AlertTriangle, DollarSign, History } from 'lucide-react';
+import { Save, AlertTriangle, DollarSign, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { Budget } from '../../types/models';
 import { LegacyBudgetModal } from './LegacyBudgetModal';
 import * as BudgetRepo from '../../services/repositories/budgetRepository';
@@ -52,6 +52,7 @@ export const BudgetManager: React.FC = () => {
     // Legacy State
     const [legacyModalOpen, setLegacyModalOpen] = useState(false);
     const [selectedCropForLegacy, setSelectedCropForLegacy] = useState<any | null>(null);
+    const [expandedCropId, setExpandedCropId] = useState<string | null>(null);
 
     // Initialize defaults
     useEffect(() => {
@@ -156,7 +157,8 @@ export const BudgetManager: React.FC = () => {
                 </div>
             </div>
 
-            <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
                 <table className="w-full text-sm bg-white dark:bg-gray-800 border-collapse">
                     <thead className="bg-gray-50 dark:bg-gray-900">
                         <tr>
@@ -278,6 +280,116 @@ export const BudgetManager: React.FC = () => {
                         })}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="block md:hidden space-y-4">
+                {[...data.crops].sort((a, b) => a.name.localeCompare(b.name)).map(crop => {
+                    const budget = budgets[crop.id] || {
+                        herbicidas: 0, insecticidas: 0, fungicidas: 0, fertilizantes: 0,
+                        coadyuvantes: 0, otrosAgroquimicos: 0, semillas: 0,
+                        pulverizacionTerrestre: 0, pulverizacionSelectiva: 0, pulverizacionAerea: 0,
+                        siembra: 0, otrasLabores: 0
+                    };
+
+                    const sumAgro = (budget.herbicidas || 0) + (budget.insecticidas || 0) + (budget.fungicidas || 0) + (budget.coadyuvantes || 0) + (budget.otrosAgroquimicos || 0);
+                    const sumFert = (budget.fertilizantes || 0);
+                    const sumSeed = (budget.semillas || 0);
+                    const sumLabor = (budget.pulverizacionTerrestre || 0) + (budget.pulverizacionSelectiva || 0) + (budget.pulverizacionAerea || 0) + (budget.siembra || 0) + (budget.otrasLabores || 0);
+                    const total = sumAgro + sumFert + sumSeed + sumLabor;
+                    const isExpanded = expandedCropId === crop.id;
+
+                    return (
+                        <div key={crop.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+                            <div
+                                className="p-4 flex justify-between items-center cursor-pointer bg-gray-50 dark:bg-gray-900/50"
+                                onClick={() => setExpandedCropId(isExpanded ? null : crop.id)}
+                            >
+                                <div>
+                                    <h3 className="font-bold text-gray-800 dark:text-gray-100">{crop.name}</h3>
+                                    <p className="text-xs text-green-600 dark:text-green-400 font-bold">Total: ${total.toFixed(2)}/ha</p>
+                                </div>
+                                {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                            </div>
+
+                            {isExpanded && (
+                                <div className="p-4 space-y-6">
+                                    {/* Agroquimicos Section */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center border-b pb-1 border-blue-100 dark:border-blue-900/30">
+                                            <span className="text-xs font-bold text-blue-600 uppercase">Agroquímicos</span>
+                                            <span className="text-xs font-bold text-blue-600">${sumAgro.toFixed(2)}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Input label="Herbicidas" type="number" value={budget.herbicidas} onChange={(e) => handleBudgetChange(crop.id, 'herbicidas', e.target.value)} />
+                                            <Input label="Insecticidas" type="number" value={budget.insecticidas} onChange={(e) => handleBudgetChange(crop.id, 'insecticidas', e.target.value)} />
+                                            <Input label="Fungicidas" type="number" value={budget.fungicidas} onChange={(e) => handleBudgetChange(crop.id, 'fungicidas', e.target.value)} />
+                                            <Input label="Coadyuvantes" type="number" value={budget.coadyuvantes} onChange={(e) => handleBudgetChange(crop.id, 'coadyuvantes', e.target.value)} />
+                                            <Input label="Otros" type="number" value={budget.otrosAgroquimicos} onChange={(e) => handleBudgetChange(crop.id, 'otrosAgroquimicos', e.target.value)} />
+                                        </div>
+                                    </div>
+
+                                    {/* Fertilizantes Section */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center border-b pb-1 border-orange-100 dark:border-orange-900/30">
+                                            <span className="text-xs font-bold text-orange-600 uppercase">Fertilizantes</span>
+                                            <span className="text-xs font-bold text-orange-600">${sumFert.toFixed(2)}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Input label="Fertilizantes" type="number" value={budget.fertilizantes} onChange={(e) => handleBudgetChange(crop.id, 'fertilizantes', e.target.value)} />
+                                        </div>
+                                    </div>
+
+                                    {/* Semillas Section */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center border-b pb-1 border-green-100 dark:border-green-900/30">
+                                            <span className="text-xs font-bold text-green-600 uppercase">Semillas</span>
+                                            <span className="text-xs font-bold text-green-600">${sumSeed.toFixed(2)}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Input label="Semillas" type="number" value={budget.semillas} onChange={(e) => handleBudgetChange(crop.id, 'semillas', e.target.value)} />
+                                        </div>
+                                    </div>
+
+                                    {/* Labores Section */}
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center border-b pb-1 border-purple-100 dark:border-purple-900/30">
+                                            <span className="text-xs font-bold text-purple-600 uppercase">Labores</span>
+                                            <span className="text-xs font-bold text-purple-600">${sumLabor.toFixed(2)}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Input label="Pulv. Terrestre" type="number" value={budget.pulverizacionTerrestre} onChange={(e) => handleBudgetChange(crop.id, 'pulverizacionTerrestre', e.target.value)} />
+                                            <Input label="Pulv. Selectiva" type="number" value={budget.pulverizacionSelectiva} onChange={(e) => handleBudgetChange(crop.id, 'pulverizacionSelectiva', e.target.value)} />
+                                            <Input label="Pulv. Aérea" type="number" value={budget.pulverizacionAerea} onChange={(e) => handleBudgetChange(crop.id, 'pulverizacionAerea', e.target.value)} />
+                                            <Input label="Siembra" type="number" value={budget.siembra} onChange={(e) => handleBudgetChange(crop.id, 'siembra', e.target.value)} />
+                                            <Input label="Otras Labores" type="number" value={budget.otrasLabores} onChange={(e) => handleBudgetChange(crop.id, 'otrasLabores', e.target.value)} />
+                                        </div>
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="pt-4 border-t dark:border-gray-700 flex gap-2">
+                                        <Button
+                                            variant="secondary"
+                                            className="flex-1 bg-amber-50 text-amber-600 border-amber-200"
+                                            onClick={() => {
+                                                setSelectedCropForLegacy(crop);
+                                                setLegacyModalOpen(true);
+                                            }}
+                                        >
+                                            <History className="w-4 h-4 mr-2" /> Histórico
+                                        </Button>
+                                        <Button
+                                            className="flex-1 bg-blue-600 text-white"
+                                            onClick={() => handleSave(crop.id)}
+                                        >
+                                            <Save className="w-4 h-4 mr-2" /> Guardar
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
             <div className="text-xs text-gray-400 text-center space-y-1">
                 <p>* Los valores están expresados en Dólares por Hectárea (USD/ha). Ingrese 0 si no aplica.</p>

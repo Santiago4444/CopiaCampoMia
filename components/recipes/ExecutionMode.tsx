@@ -9,6 +9,7 @@ import {
     AlertTriangle, ShoppingCart, Info, MapPin, Clock, ChevronDown, ChevronUp
 } from 'lucide-react';
 import * as Storage from '../../services/storageService';
+import { useOfflinePrescriptions } from '../../hooks/useOfflineMedia';
 import { Prescription, PrescriptionExecution, ExecutionItem, PrescriptionItem } from '../../types';
 
 interface ExecutionModeProps {
@@ -57,7 +58,7 @@ export const ExecutionMode: React.FC<ExecutionModeProps> = ({ onBack, forcedComp
     const availableFields = data.fields.filter(f => !selectedCompanyId || f.companyId === selectedCompanyId);
 
     // Filter Recipes
-    const filteredRecipes = useMemo(() => {
+    const rawFilteredRecipes = useMemo(() => {
         return data.prescriptions.filter(p => {
             if (p.status === 'archived') return false;
 
@@ -78,6 +79,9 @@ export const ExecutionMode: React.FC<ExecutionModeProps> = ({ onBack, forcedComp
             }
         }).sort((a, b) => b.createdAt - a.createdAt);
     }, [data.prescriptions, selectedCompanyId, selectedFieldId, statusFilter]);
+
+    // Enrich with offline audio
+    const filteredRecipes = useOfflinePrescriptions(rawFilteredRecipes);
 
     const handleOpenExecutionModal = (recipe: Prescription, plotId: string) => {
         setExecutingRecipe(recipe);
@@ -225,6 +229,29 @@ export const ExecutionMode: React.FC<ExecutionModeProps> = ({ onBack, forcedComp
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-2">
+                                        {recipe.hasAudio && recipe.audioUrl && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const audio = document.getElementById(`audio-recipe-exec-${recipe.id}`) as HTMLAudioElement;
+                                                    if (playingAudioId === recipe.id) {
+                                                        setPlayingAudioId(null);
+                                                        audio?.pause();
+                                                    } else {
+                                                        setPlayingAudioId(recipe.id);
+                                                        if (audio) {
+                                                            audio.play().catch(e => console.error("Audio play error", e));
+                                                            audio.onended = () => setPlayingAudioId(null);
+                                                        }
+                                                    }
+                                                }}
+                                                className={`p-1.5 rounded-full border transition-all ${playingAudioId === recipe.id ? 'bg-blue-100 text-blue-600 border-blue-200 animate-pulse' : 'text-gray-400 hover:text-blue-500 hover:bg-blue-50 border-transparent hover:border-blue-100'}`}
+                                                title="Escuchar audio de receta"
+                                            >
+                                                {playingAudioId === recipe.id ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                                <audio id={`audio-recipe-exec-${recipe.id}`} src={recipe.audioUrl} className="hidden" />
+                                            </button>
+                                        )}
                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${statusFilter === 'pending' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                                             {statusFilter === 'pending' ? 'PENDIENTE' : 'EJECUTADA'}
                                         </span>

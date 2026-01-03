@@ -287,7 +287,7 @@ export const HistoryView: React.FC = () => {
                         <input type="file" accept=".xlsx, .xls" onChange={handleImportExcel} className="hidden" disabled={isImporting} />
                     </label>
 
-                    <Button variant="secondary" onClick={handleExportExcel} className="px-3 py-1.5 h-auto text-xs font-bold hidden sm:flex" disabled={filteredHistory.length === 0}>
+                    <Button variant="secondary" onClick={handleExportExcel} className="px-3 py-1.5 h-auto text-xs font-bold flex" disabled={filteredHistory.length === 0}>
                         <FileSpreadsheet className="w-3.5 h-3.5 mr-1.5" /> EXPORTAR
                     </Button>
 
