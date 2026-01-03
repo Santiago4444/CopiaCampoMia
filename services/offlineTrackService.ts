@@ -57,6 +57,17 @@ export const getPendingTracks = async (): Promise<TrackSession[]> => {
     }
 };
 
+// NEW: Get a specific track by ID (used by sync service)
+export const getOfflineTrack = async (id: string): Promise<TrackSession | undefined> => {
+    try {
+        const db = await initDB();
+        return await db.get(STORE_NAME, id);
+    } catch (error) {
+        console.error('[OfflineTrackService] Error getting offline track:', error);
+        return undefined;
+    }
+};
+
 export const markTrackSynced = async (id: string): Promise<void> => {
     try {
         const db = await initDB();

@@ -7,6 +7,8 @@ import { db } from './firebase';
 import { getBlobFromIndexedDB, deleteBlobFromIndexedDB } from './indexedDBService';
 import { uploadMedia } from './utils/mediaUtils';
 import { removeFromLocalCache } from './localCacheService';
+import { getOfflineTrack, markTrackSynced } from './offlineTrackService';
+import { saveTrack } from './repositories/trackRepository';
 
 const MAX_RETRIES = 3;
 let isSyncInProgress = false;
@@ -274,6 +276,24 @@ const processOperation = async (operation: any) => {
 
       case 'deletePrescription':
         await deleteDoc(doc(db, 'prescriptions', operation.data.id));
+        break;
+
+      case 'addTrack':
+        // Recuperar track completo de IndexedDB usando el ID
+        const trackId = operation.data.id;
+        const trackData = await getOfflineTrack(trackId);
+
+        if (trackData) {
+          console.log(`📍 Sincronizando track ${trackId} (${trackData.points.length} puntos)...`);
+          // Subir a Firebase
+          await saveTrack(trackData);
+          // Marcar como sincronizado localmente
+          await markTrackSynced(trackId);
+          console.log(`✅ Track ${trackId} sincronizado correctamente`);
+        } else {
+          console.warn(`⚠️ Track ${trackId} no encontrado en IndexedDB, no se puede sincronizar.`);
+          // No fallamos la operación para que se desencole, ya que no se puede recuperar
+        }
         break;
 
       default:

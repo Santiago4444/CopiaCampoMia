@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useRef, useEffect, ReactNod
 import { TrackSession, TrackPoint } from '../types/tracking';
 import { calculateDistance, requestWakeLock, releaseWakeLock } from '../services/trackingService';
 import { saveTrack } from '../services/repositories/trackRepository';
+import { enqueueOperation } from '../services/offlineQueueService';
 import { useAuth } from './AuthContext'; // Assuming this exists, verify later
 // Simple UUID generator to avoid dependency issues
 function generateUUID() {
@@ -294,13 +295,15 @@ export const TrackingProvider: React.FC<{ children: ReactNode }> = ({ children }
                     try {
                         await saveTrack(finalTrack);
                         await markTrackSynced(finalTrack.id);
-                        finalTrack.status = 'synced';
-                        finalTrack.synced = true;
+                        // No need to set status on object, we just reload or use what's in DB
+                        console.log("Track synced successfully");
                     } catch (syncErr) {
-                        console.warn("Sync failed, track saved offline", syncErr);
+                        console.warn("Sync failed, enqueuing for later", syncErr);
+                        enqueueOperation('addTrack', { id: finalTrack.id });
                     }
                 } else {
-                    console.log("Offline mode: Track saved locally.");
+                    console.log("Offline mode: Track saved locally, enqueuing.");
+                    enqueueOperation('addTrack', { id: finalTrack.id });
                 }
 
             } catch (e) {

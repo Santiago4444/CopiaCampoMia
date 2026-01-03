@@ -11,7 +11,7 @@ export interface MediaIds {
 
 export interface QueuedOperation {
   id: string;
-  type: 'addMonitoring' | 'updateMonitoring' | 'deleteMonitoring' | 'addLotSummary' | 'deleteLotSummary' | 'updateLotSummaryFeedback' | 'addPrescription' | 'updatePrescription' | 'deletePrescription';
+  type: 'addMonitoring' | 'updateMonitoring' | 'deleteMonitoring' | 'addLotSummary' | 'deleteLotSummary' | 'updateLotSummaryFeedback' | 'addPrescription' | 'updatePrescription' | 'deletePrescription' | 'addTrack';
   data: any;
   mediaIds?: MediaIds;  // IDs de archivos en IndexedDB
   timestamp: number;
@@ -31,10 +31,10 @@ const isValidOperation = (op: any): op is QueuedOperation => {
   if (typeof op.timestamp !== 'number') return false;
   if (typeof op.retries !== 'number') return false;
   if (!op.data) return false;
-  
-  const validTypes = ['addMonitoring', 'updateMonitoring', 'deleteMonitoring', 'addLotSummary', 'deleteLotSummary', 'updateLotSummaryFeedback', 'addPrescription', 'updatePrescription', 'deletePrescription'];
+
+  const validTypes = ['addMonitoring', 'updateMonitoring', 'deleteMonitoring', 'addLotSummary', 'deleteLotSummary', 'updateLotSummaryFeedback', 'addPrescription', 'updatePrescription', 'deletePrescription', 'addTrack'];
   if (!validTypes.includes(op.type)) return false;
-  
+
   return true;
 };
 
@@ -43,18 +43,18 @@ export const getQueue = (): QueuedOperation[] => {
   try {
     const queue = localStorage.getItem(QUEUE_KEY);
     if (!queue) return [];
-    
+
     const parsed = JSON.parse(queue);
     if (!Array.isArray(parsed)) {
       console.error('⚠️ Cola corrupta: no es un array. Reiniciando cola.');
       localStorage.removeItem(QUEUE_KEY);
       return [];
     }
-    
+
     // Filtrar operaciones válidas y mover las inválidas a una cola de fallidos
     const validOps: QueuedOperation[] = [];
     const invalidOps: any[] = [];
-    
+
     parsed.forEach(op => {
       if (isValidOperation(op)) {
         validOps.push(op);
@@ -62,7 +62,7 @@ export const getQueue = (): QueuedOperation[] => {
         invalidOps.push(op);
       }
     });
-    
+
     // Si hay operaciones inválidas, logear y guardar en cola separada
     if (invalidOps.length > 0) {
       console.warn(`⚠️ ${invalidOps.length} operaciones inválidas encontradas en la cola:`, invalidOps);
@@ -73,13 +73,13 @@ export const getQueue = (): QueuedOperation[] => {
       } catch (e) {
         console.error('No se pudo guardar operaciones inválidas:', e);
       }
-      
+
       // Guardar solo las operaciones válidas
       if (validOps.length !== parsed.length) {
         saveQueue(validOps);
       }
     }
-    
+
     return validOps;
   } catch (e) {
     console.error('❌ Error crítico leyendo cola offline:', e);
@@ -105,7 +105,7 @@ export const enqueueOperation = (
 ): string => {
   const queue = getQueue();
   const id = `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
+
   const operation: QueuedOperation = {
     id,
     type,
@@ -114,10 +114,10 @@ export const enqueueOperation = (
     timestamp: Date.now(),
     retries: 0
   };
-  
+
   queue.push(operation);
   saveQueue(queue);
-  
+
   console.log(`📥 Operación encolada: ${type} (ID: ${id})`, mediaIds ? `con archivos: ${JSON.stringify(mediaIds)}` : '');
   return id;
 };
@@ -195,11 +195,11 @@ export const queueHealthCheck = (): {
 } => {
   const queue = getQueue();
   const failed = getFailedOperations();
-  
+
   const timestamps = queue.map(op => op.timestamp).filter(t => t);
   const oldestOperation = timestamps.length > 0 ? Math.min(...timestamps) : null;
   const newestOperation = timestamps.length > 0 ? Math.max(...timestamps) : null;
-  
+
   return {
     isHealthy: failed.length === 0,
     validCount: queue.length,
